@@ -6,4 +6,4 @@
  * 2. OR leave it empty and configure it directly in the UI via the "Engine Online / Status" button.
  * 3. OR access your Netlify site with a query param: https://your-site.netlify.app/?backend=https://your-backend.onrender.com
  */
-window.VERIFAI_BACKEND_URL = "";
+window.VERIFAI_BACKEND_URL = "https://verifyai-yea7.onrender.com";
