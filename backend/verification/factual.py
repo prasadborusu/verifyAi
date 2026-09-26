@@ -6,7 +6,7 @@ SUPPORTED, UNSUPPORTED, CONTRADICTED, or INSUFFICIENT_EVIDENCE.
 
 import re
 import logging
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from backend.models.schemas import EvidenceItem, VerificationCheck
 
 logger = logging.getLogger("verification_factual")
