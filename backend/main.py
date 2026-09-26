@@ -44,11 +44,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS middleware for Streamlit or web UI integration
+# CORS middleware for Netlify, custom frontend domains, and local integration
+cors_origins_env = os.getenv("CORS_ORIGINS", "*")
+if cors_origins_env == "*":
+    allow_origins = ["*"]
+    allow_credentials = False
+else:
+    allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_origin_regex=os.getenv("CORS_ORIGIN_REGEX", r"https://.*\.netlify\.app"),
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -364,3 +373,11 @@ def trigger_independent_verification(task_id: str):
 def list_tasks(limit: int = 50):
     """Lists recent tasks with decision status."""
     return list_recent_tasks(limit=limit)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    uvicorn.run("backend.main:app", host=host, port=port, reload=False)
+

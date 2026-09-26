@@ -7,7 +7,7 @@ STRICT RULE: The planner agent must NEVER directly produce the final answer.
 
 import os
 import logging
-from typing import Optional
+from typing import Optional, List, Any, Dict
 from backend.models.schemas import PlannerOutput
 from backend.services.gemini import get_gemini_service
 

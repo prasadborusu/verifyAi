@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="config.js"></script>
 <style>
 :root {
   --bg: #080b10;
@@ -2466,9 +2467,9 @@ body.sidebar-closed .sidebar {
         <button class="topbar-metrics-btn" onclick="openEvaluationMetricsTab()" title="View Evaluation & Verification Metrics">
           <span>📊</span> Evaluation Metrics
         </button>
-        <div class="status-pill">
+        <div class="status-pill" id="backend-status-pill" onclick="openBackendConfigModal()" title="Click to view or change backend connection URL" style="cursor: pointer;">
           <div class="status-dot"></div>
-          Engine Online
+          <span id="backend-status-text">Engine Online</span>
         </div>
       </div>
     </div>
@@ -2754,7 +2755,30 @@ body.sidebar-closed .sidebar {
 </div>
 
 <script>
-const API = (window.location.origin && window.location.origin.startsWith('http')) ? window.location.origin : 'http://127.0.0.1:8000';
+function getBackendUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramUrl = urlParams.get('backend') || urlParams.get('api');
+  if (paramUrl) {
+    const clean = paramUrl.replace(/\/+$/, '');
+    localStorage.setItem('VERIFAI_BACKEND_URL', clean);
+    return clean;
+  }
+  const saved = localStorage.getItem('VERIFAI_BACKEND_URL');
+  if (saved && saved.trim()) {
+    return saved.trim().replace(/\/+$/, '');
+  }
+  if (window.VERIFAI_BACKEND_URL && window.VERIFAI_BACKEND_URL.trim()) {
+    return window.VERIFAI_BACKEND_URL.trim().replace(/\/+$/, '');
+  }
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return (window.location.origin && window.location.origin.startsWith('http') && window.location.port !== '5500' && window.location.port !== '3000')
+      ? window.location.origin
+      : 'http://127.0.0.1:8000';
+  }
+  return (window.location.origin && window.location.origin.startsWith('http')) ? window.location.origin : 'http://127.0.0.1:8000';
+}
+
+let API = getBackendUrl();
 
 // Store tasks by ID for safe recall without HTML string escaping issues
 const taskStore = new Map();
@@ -2844,16 +2868,23 @@ window.onload = async () => {
 
 // HEALTH CHECK
 async function checkHealth() {
+  const dot = document.querySelector('.status-dot');
+  const text = document.getElementById('backend-status-text');
+  const pill = document.getElementById('backend-status-pill');
   try {
     const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(5000) });
     const data = await res.json();
-    const dot = document.querySelector('.status-dot');
-    if (data.status === 'healthy' && dot) {
-      dot.style.background = 'var(--green)';
+    if (data.status === 'healthy') {
+      if (dot) dot.style.background = 'var(--green)';
+      if (text) text.textContent = 'Engine Online';
+      if (pill) pill.title = `Connected to: ${API} (Click to configure)`;
+      return true;
     }
   } catch (e) {
-    const dot = document.querySelector('.status-dot');
     if (dot) dot.style.background = 'var(--yellow)';
+    if (text) text.textContent = 'Disconnected';
+    if (pill) pill.title = `Cannot reach backend at ${API} (Click to set Render URL)`;
+    return false;
   }
 }
 
@@ -4793,6 +4824,76 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// BACKEND CONFIGURATION MODAL FUNCTIONS
+function openBackendConfigModal() {
+  const modal = document.getElementById('backend-config-modal');
+  const input = document.getElementById('backend-url-input');
+  const status = document.getElementById('backend-config-status');
+  if (input) input.value = API;
+  if (status) {
+    status.textContent = `Current Target: ${API}`;
+    status.style.color = 'var(--text-muted)';
+  }
+  if (modal) modal.classList.add('open');
+}
+
+function closeBackendConfigModal() {
+  const modal = document.getElementById('backend-config-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+async function saveBackendUrlConfig() {
+  const input = document.getElementById('backend-url-input');
+  const status = document.getElementById('backend-config-status');
+  let target = (input ? input.value : '').trim().replace(/\/+$/, '');
+  if (!target) {
+    if (status) {
+      status.textContent = 'Please enter a valid URL (e.g. https://your-backend.onrender.com)';
+      status.style.color = 'var(--red)';
+    }
+    return;
+  }
+  if (!target.startsWith('http://') && !target.startsWith('https://')) {
+    target = 'https://' + target;
+  }
+  if (status) {
+    status.textContent = `Testing connection to ${target}/health...`;
+    status.style.color = 'var(--yellow)';
+  }
+  try {
+    const res = await fetch(`${target}/health`, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    if (data.status === 'healthy') {
+      API = target;
+      localStorage.setItem('VERIFAI_BACKEND_URL', target);
+      if (status) {
+        status.textContent = 'Connected successfully!';
+        status.style.color = 'var(--green)';
+      }
+      checkHealth();
+      await loadDocumentsRegistry();
+      showToast('Connected to Render Backend!');
+      setTimeout(closeBackendConfigModal, 600);
+      return;
+    }
+  } catch (e) {
+    API = target;
+    localStorage.setItem('VERIFAI_BACKEND_URL', target);
+    if (status) {
+      status.textContent = `Saved URL, but health check failed (${e.message}). Note: Render free tier services take ~45s to wake from sleep.`;
+      status.style.color = 'var(--yellow)';
+    }
+    checkHealth();
+    showToast('Backend URL saved');
+  }
+}
+
+function setLocalhostBackend() {
+  const input = document.getElementById('backend-url-input');
+  if (input) input.value = 'http://127.0.0.1:8000';
+  saveBackendUrlConfig();
+}
 </script>
 
 <!-- SOURCE VIEWER MODAL -->
@@ -4815,6 +4916,29 @@ function showToast(msg) {
     <div class="delete-chat-modal-actions">
       <button type="button" class="del-modal-btn cancel" onclick="cancelDeleteChat()">Cancel</button>
       <button type="button" class="del-modal-btn confirm" id="del-modal-confirm-btn" onclick="confirmDeleteChat()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKEND CONFIGURATION MODAL -->
+<div id="backend-config-modal" class="source-modal-overlay" onclick="if(event.target===this)closeBackendConfigModal()">
+  <div class="source-modal-box" style="max-width: 520px;">
+    <div class="source-modal-header">
+      <div class="source-modal-title">⚙️ Backend Connection Settings</div>
+      <button class="source-modal-close" onclick="closeBackendConfigModal()">&times;</button>
+    </div>
+    <div class="source-modal-body" style="padding: 22px;">
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
+        Connect this Netlify frontend to your FastAPI backend running on Render or locally.
+      </p>
+      <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 8px;">Render Backend API URL</label>
+      <input type="text" id="backend-url-input" placeholder="https://verifyai-backend.onrender.com" style="width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; box-sizing: border-box;">
+      <div id="backend-config-status" style="font-size: 12px; margin-bottom: 16px; min-height: 18px;"></div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+        <button type="button" class="del-modal-btn cancel" onclick="setLocalhostBackend()">Use Localhost</button>
+        <button type="button" class="del-modal-btn cancel" onclick="closeBackendConfigModal()">Cancel</button>
+        <button type="button" class="del-modal-btn confirm" style="background: var(--green); border-color: var(--green-border); color: #fff;" onclick="saveBackendUrlConfig()">Save & Connect</button>
+      </div>
     </div>
   </div>
 </div>

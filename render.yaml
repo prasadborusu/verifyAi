@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: verifyai-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: CHROMA_PERSIST_DIR
+        value: ./chroma_db
+      - key: AUDIT_DB_PATH
+        value: ./audit.db
+      - key: CORS_ORIGINS
+        value: "*"

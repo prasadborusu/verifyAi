@@ -9,7 +9,7 @@ import sys
 import io
 import time
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from backend.models.schemas import VerificationCheck
 
 logger = logging.getLogger("verification_code")

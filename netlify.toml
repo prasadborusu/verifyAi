@@ -1,0 +1,50 @@
+[build]
+  # Netlify publishes the static frontend directory containing index.html and config.js
+  publish = "frontend"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# SPA Fallback: Route all unmatched paths to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# OPTIONAL NETLIFY REVERSE PROXY:
+# If you prefer Netlify to proxy backend requests without cross-origin requests,
+# uncomment the rules below and replace YOUR_RENDER_SERVICE with your actual Render URL:
+#
+# [[redirects]]
+#   from = "/health"
+#   to = "https://YOUR_RENDER_SERVICE.onrender.com/health"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/analyze"
+#   to = "https://YOUR_RENDER_SERVICE.onrender.com/analyze"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/documents/*"
+#   to = "https://YOUR_RENDER_SERVICE.onrender.com/documents/:splat"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/tasks/*"
+#   to = "https://YOUR_RENDER_SERVICE.onrender.com/tasks/:splat"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/evaluation/*"
+#   to = "https://YOUR_RENDER_SERVICE.onrender.com/evaluation/:splat"
+#   status = 200
+#   force = true

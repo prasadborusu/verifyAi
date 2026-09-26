@@ -215,3 +215,37 @@ All 12 unit and integration tests validate the API, arithmetic checks, contradic
 1. **Dockerized Ephemeral Sub-processes**: Current code sandboxing uses in-process AST AST-visitor inspection and restricted namespaces; future versions can bind isolated ephemeral Docker containers per execution.
 2. **Multi-Table SQL RAG**: Extensible RAG currently handles PDFs, TXTs, and CSVs; dynamic schema-aware SQL translation would expand tabular reasoning.
 3. **Cross-Lingual Currency Normalization**: Automatic exchange-rate and denomination normalization (e.g. converting Lakh/Crore to USD/EUR) in the Coder agent.
+
+---
+
+## 12. Deployment Guide
+
+### Deploy Backend on Render
+1. Push this repository to GitHub.
+2. Log in to [Render](https://render.com) and click **New +** > **Web Service** (or use **Blueprints** with `render.yaml`).
+3. Connect your repository.
+4. Settings:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+5. Under **Environment Variables**, add:
+   - `GEMINI_API_KEY`: Your Google Gemini API Key
+   - `GEMINI_MODEL`: `gemini-2.5-flash`
+   - `PYTHON_VERSION`: `3.11.8`
+   - `CORS_ORIGINS`: `*`
+6. Click **Deploy Web Service**. Once deployed, copy your Render URL (e.g., `https://verifyai-backend.onrender.com`).
+
+### Deploy Frontend on Netlify
+1. Log in to [Netlify](https://netlify.com) and click **Add new site** > **Import an existing project**.
+2. Connect your GitHub repository.
+3. Settings (automatically detected via `netlify.toml`):
+   - **Base directory**: Leave blank or `/`
+   - **Build command**: Leave blank
+   - **Publish directory**: `frontend`
+4. Click **Deploy site**.
+5. Once your Netlify site is live:
+   - Open your Netlify URL (e.g. `https://your-site.netlify.app`).
+   - Click the **Engine Online / Status** button in the top-right header.
+   - Enter your Render backend URL (e.g. `https://verifyai-backend.onrender.com`) and click **Save & Connect**.
+   - Alternatively, add `?backend=https://verifyai-backend.onrender.com` to your URL once, or set it inside `frontend/config.js`.
+
