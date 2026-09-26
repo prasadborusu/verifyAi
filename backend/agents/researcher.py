@@ -185,9 +185,10 @@ class ResearcherAgent:
                             "calculation_steps": calc_steps,
                         }
                     )
+                    clean_src_id = re.sub(r"[^\w\-]", "_", doc_name.lower())
                     ev_clm = EvidenceClaim(
-                        claim_id=f"clm_{re.sub(r'[^\w\-]', '_', doc_name.lower())}_{spec.operation}",
-                        source_id=re.sub(r"[^\w\-]", "_", doc_name.lower()),
+                        claim_id=f"clm_{clean_src_id}_{spec.operation}",
+                        source_id=clean_src_id,
                         source_name=doc_name,
                         page=1,
                         excerpt=f"Verified {spec.operation} {spec.target_column or ''}: {formatted_val}",
