@@ -1,0 +1,9 @@
+﻿web_scraper_order,web_scraper_start_url,data,data2
+"1768979481-1","https://webscraper.io/","Point-and-click interface","Configure scraper by pointing and clicking on elements.
+					No coding required."
+"1768979481-2","https://webscraper.io/","Extract data from dynamic web sites","Extract data from sited with multiple levels of navigation."
+"1768979481-3","https://webscraper.io/","Handle JavaScript sites","Full JavaScript execution and waiting for Ajax requests"
+"1768979481-4","https://webscraper.io/","Use sitemaps to customize data","Customize data to different site structures"
+"1768979481-5","https://webscraper.io/","Export data in CSV, XLSX and JSON formats","Build scrapers, scrape sites and export data in CSV format directly from your browser.
+					Use Web Scraper Cloud to export data in CSV, XLSX and JSON formats, access it via API, webhooks or
+					get it exported via Dropbox, Google Cloud, Google Drive, Google Sheets, Microsoft Azure or Amazon S3 ."

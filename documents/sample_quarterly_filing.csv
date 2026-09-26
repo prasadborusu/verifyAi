@@ -1,0 +1,9 @@
+year,quarter,revenue_lakh,operating_cost_lakh,net_profit_lakh,audited
+2024,Q1,22.0,17.0,5.0,true
+2024,Q2,24.0,18.5,5.5,true
+2024,Q3,26.0,20.0,6.0,true
+2024,Q4,28.0,21.5,6.5,true
+2025,Q1,27.0,20.5,6.5,true
+2025,Q2,29.0,22.0,7.0,true
+2025,Q3,31.0,23.5,7.5,true
+2025,Q4,33.0,25.0,8.0,true

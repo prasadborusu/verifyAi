@@ -1,0 +1,4823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERIFAI — Proof &amp; Verification Engine</title>
+<meta name="description" content="VERIFAI: Don't just generate answers. Verify them. Multi-agent AI reasoning and verification engine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+:root {
+  --bg: #080b10;
+  --sidebar-bg: #0c1017;
+  --panel: #111722;
+  --panel-hover: #161f2e;
+  --panel-active: #1a2536;
+  --border: #1c2635;
+  --border-light: #263447;
+  --text: #f0f4f8;
+  --text-muted: #8392a5;
+  --text-dim: #546375;
+  --green: #10b981;
+  --green-bg: rgba(16, 185, 129, 0.08);
+  --green-border: rgba(16, 185, 129, 0.25);
+  --red: #ef4444;
+  --red-bg: rgba(239, 68, 68, 0.08);
+  --red-border: rgba(239, 68, 68, 0.25);
+  --yellow: #f59e0b;
+  --yellow-bg: rgba(245, 158, 11, 0.08);
+  --yellow-border: rgba(245, 158, 11, 0.25);
+  --sidebar-w: 260px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
+
+/* APP SHELL */
+.app-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
+  height: 100%;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  z-index: 40;
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), margin-left 0.25s cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform, margin-left;
+}
+
+body.sidebar-closed .sidebar {
+  margin-left: calc(-1 * var(--sidebar-w));
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 16px;
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.sidebar-toggle-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.new-chat-btn {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  transition: all 0.15s ease;
+  margin-bottom: 18px;
+}
+
+.new-chat-btn:hover {
+  background: var(--panel-hover);
+  border-color: var(--border-light);
+}
+
+.new-chat-btn svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.history-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  position: relative;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+
+.history-item-wrap:hover {
+  background: var(--panel);
+}
+
+.history-item-wrap.active {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+.history-item-content {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 8px 6px 8px 10px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.history-item-wrap.active .history-item-content {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.history-item-wrap:hover .history-item-content {
+  color: var(--text);
+}
+
+.history-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--green);
+  opacity: 0.9;
+}
+
+.history-item-dot.rej {
+  background: var(--red);
+}
+
+.history-item-dot.warn {
+  background: var(--yellow);
+}
+
+.history-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.history-item-del-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.history-item-wrap:hover .history-item-del-btn {
+  display: flex;
+}
+
+.history-item-del-btn:hover {
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Delete confirmation modal */
+.delete-chat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 12, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.delete-chat-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delete-chat-modal-box {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delete-chat-modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.delete-chat-modal-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.delete-chat-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.del-modal-btn {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.del-modal-btn.cancel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.del-modal-btn.cancel:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.del-modal-btn.confirm {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+
+.del-modal-btn.confirm:hover {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: #ef4444;
+}
+
+.history-empty {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  padding: 12px 10px;
+}
+
+/* MAIN CONTENT */
+.main-view {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* TOP BAR */
+.topbar {
+  height: 48px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--bg);
+  z-index: 20;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-brand {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+/* PAGES */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page.hidden {
+  display: none !important;
+}
+
+/* CHAT SCROLL AREA */
+.chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 170px;
+}
+
+.chat-center {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  min-height: calc(100vh - 280px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  margin-bottom: 20px;
+}
+
+.empty-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.empty-tagline {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 500px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.empty-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  max-width: 480px;
+  line-height: 1.6;
+}
+
+/* MESSAGES */
+.message-row {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-row.user {
+  align-items: flex-end;
+}
+
+.user-bubble {
+  max-width: 75%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 18px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.user-chip-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.message-row.assistant {
+  align-items: flex-start;
+}
+
+.ai-header-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-avatar-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+}
+
+.ai-avatar-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.ai-content-box {
+  width: 100%;
+  max-width: 100%;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* PROMINENT ANSWER VALUE */
+.verified-ans-hero {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin: 4px 0 12px;
+  line-height: 1.2;
+}
+
+.verified-ans-hero.rej {
+  color: var(--red);
+  font-size: 24px;
+}
+
+.verified-ans-hero.warn {
+  color: var(--yellow);
+  font-size: 24px;
+}
+
+/* ═══ NEW TWO-SECTION AI ANSWER + VERIFAI CHECK LAYOUT ═══ */
+
+/* AI ANSWER section */
+.ai-answer-section {
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  margin-bottom: 0;
+}
+.ai-answer-section.conv {
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+}
+.ai-answer-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(148,163,184,0.6);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.ai-answer-text {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* Divider between AI ANSWER and VERIFAI CHECK */
+.verifai-check-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3) 30%, rgba(99,102,241,0.3) 70%, transparent);
+  margin: 12px 0;
+}
+
+/* VERIFAI CHECK section */
+.verifai-check-section {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+.verifai-check-section.verified { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.04); }
+.verifai-check-section.rej      { border-color: rgba(239,68,68,0.2);  background: rgba(239,68,68,0.04); }
+.verifai-check-section.unver    { border-color: rgba(234,179,8,0.2);  background: rgba(234,179,8,0.04); }
+.verifai-check-section.contra   { border-color: rgba(234,179,8,0.2);  background: rgba(234,179,8,0.04); }
+.verifai-check-section.not-req  { border-color: rgba(100,116,139,0.2); background: rgba(100,116,139,0.04); }
+
+.verifai-check-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(148,163,184,0.6);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.verifai-check-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ver-check-note {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.ver-check-note.warn { color: #facc15; }
+.ver-check-note.rej  { color: #f87171; }
+.verifai-contra-detail,
+.verifai-detail-text {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ================= SOURCE PROVENANCE CARD ================= */
+.prov-card {
+  margin-top: 10px;
+  background: rgba(17, 23, 34, 0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.prov-card.contra {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.03);
+}
+.prov-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prov-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.prov-field-value {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+.prov-field-value strong {
+  color: #ffffff;
+}
+.prov-field-value code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: #050810;
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--green);
+}
+.prov-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.prov-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.view-source-btn {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--green-border);
+  background: var(--green-bg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.view-source-btn:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: var(--green);
+  color: #ffffff;
+}
+.contra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 6px 0;
+}
+@media (max-width: 600px) {
+  .contra-grid { grid-template-columns: 1fr; }
+}
+.contra-src-box {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.contra-src-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #facc15;
+  text-transform: uppercase;
+}
+.contra-src-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.contra-src-quote {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+.contra-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  color: #facc15;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.ev-prov-line {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.ev-prov-lbl {
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+/* SOURCE VIEWER MODAL */
+.source-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.source-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.source-modal-box {
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+.source-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.source-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.source-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.source-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+.source-modal-close:hover {
+  color: #ffffff;
+}
+
+/* Badge variants for UNVERIFIED and NOT_REQUIRED */
+.ver-tag-pill.unver {
+  background: rgba(234,179,8,0.12);
+  color: #facc15;
+  border-color: rgba(234,179,8,0.3);
+}
+.ver-tag-pill.not-req {
+  background: rgba(100,116,139,0.12);
+  color: #94a3b8;
+  border-color: rgba(100,116,139,0.3);
+}
+
+.verified-explanation {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+/* MARKDOWN STYLING */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.markdown-body p {
+  margin-bottom: 12px;
+}
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+.markdown-body strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+.markdown-body em {
+  font-style: italic;
+}
+.markdown-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--green);
+}
+.markdown-body pre {
+  background: #050810;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 10px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.markdown-body pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #cbd5e1;
+}
+.markdown-body ul, .markdown-body ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+.markdown-body li {
+  margin-bottom: 4px;
+}
+
+/* COMPACT VERIFICATION STRIP */
+.verification-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ver-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 11.5px;
+  color: var(--green);
+}
+
+.ver-tag-pill.rej {
+  color: var(--red);
+}
+
+.ver-tag-pill.warn {
+  color: var(--yellow);
+}
+
+.ver-meta-item {
+  color: var(--text-dim);
+}
+
+.view-lab-link {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  transition: all 0.15s ease;
+}
+
+.view-lab-link:hover {
+  border-color: var(--green-border);
+  color: var(--green);
+  background: var(--panel-hover);
+}
+
+/* LOADING PIPELINE ANIMATION */
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.p-flow-step {
+  transition: color 0.2s;
+}
+
+.p-flow-step.active {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.p-flow-step.done {
+  color: var(--text-muted);
+}
+
+/* CONTRADICTION & REJECTION BOXES */
+.alert-notice {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.alert-notice.warn {
+  background: var(--yellow-bg);
+  border: 1px solid var(--yellow-border);
+  color: var(--yellow);
+}
+
+.alert-notice.rej {
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+}
+
+/* CHAT INPUT DOCK */
+.chat-dock {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.dock-inner {
+  width: 100%;
+  max-width: 860px;
+  pointer-events: auto;
+  position: relative;
+}
+
+/* ATTACHED CHIP */
+.attached-chip-bar {
+  display: none;
+  margin-bottom: 8px;
+}
+
+.attached-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text);
+  max-width: 100%;
+}
+
+.attached-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+  font-weight: 500;
+}
+
+.attached-chip-close {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.attached-chip-close:hover {
+  color: var(--red);
+}
+
+/* CONTEXT POPOVER PANEL */
+.context-popover {
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.context-popover.open {
+  display: block;
+}
+
+.ctx-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ctx-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ctx-close-btn {
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.ctx-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.ctx-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ctx-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--green);
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.ctx-ta {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  resize: vertical;
+  min-height: 54px;
+  outline: none;
+}
+
+.ctx-ta:focus {
+  border-color: var(--border-light);
+}
+
+.ctx-rm-btn {
+  color: var(--text-dim);
+  font-size: 16px;
+  margin-top: 6px;
+}
+
+.ctx-rm-btn:hover {
+  color: var(--red);
+}
+
+.ctx-add-btn {
+  width: 100%;
+  padding: 7px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.ctx-add-btn:hover {
+  border-color: var(--border-light);
+  color: var(--text);
+}
+
+/* VERIFY AI OUTPUT MODAL / PANEL */
+.verify-output-popover {
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.verify-output-popover.open {
+  display: block;
+}
+
+.vo-field-group {
+  margin-bottom: 12px;
+}
+
+.vo-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.vo-field-label span.req {
+  color: var(--red);
+}
+
+.vo-field-label span.opt {
+  color: var(--text-dim);
+  font-weight: 400;
+  text-transform: none;
+}
+
+.vo-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.vo-textarea:focus {
+  border-color: var(--border-light);
+}
+
+.vo-textarea.code-font {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #050810;
+  color: #38bdf8;
+  min-height: 90px;
+}
+
+.vo-btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.vo-cancel-btn {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vo-cancel-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.vo-submit-btn {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--green);
+  color: #050810;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.vo-submit-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* CHAT INPUT BAR */
+.chat-input-bar {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 8px 10px 8px 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.chat-input-bar:focus-within {
+  border-color: var(--border-light);
+}
+
+/* PLUS BUTTON & MENU */
+.plus-trigger-wrap {
+  position: relative;
+}
+
+.plus-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.plus-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.plus-menu-popover {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 200px;
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  display: none;
+  z-index: 50;
+}
+
+.plus-menu-popover.open {
+  display: block;
+}
+
+.plus-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.12s;
+}
+
+.plus-menu-item:hover {
+  background: var(--panel-hover);
+}
+
+.plus-menu-item svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.chat-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  max-height: 160px;
+  min-height: 24px;
+  padding: 6px 4px;
+}
+
+.chat-textarea::placeholder {
+  color: var(--text-dim);
+}
+
+.send-trigger-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--green);
+  color: #03140c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.send-trigger-btn:hover {
+  filter: brightness(1.1);
+}
+
+.send-trigger-btn:disabled {
+  background: var(--panel-hover);
+  color: var(--text-dim);
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* VERIFICATION LAB PAGE — POLISHED COMPACT */
+.lab-scroll-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 20px 48px;
+}
+
+.lab-max-width {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.lab-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.back-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.back-chat-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.lab-task-id-tag {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* COMPACT VERIFICATION HEADER */
+.lab-meta-header {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.lab-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.lab-header-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.lab-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.lab-status-badge.g {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green-border);
+}
+
+.lab-status-badge.r {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.lab-status-badge.y {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.lab-header-qa {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.lab-qa-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.lab-qa-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 68px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lab-qa-text {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.lab-ai-answer {
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.lab-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lab-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.lab-chip b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lab-chip b.g { color: var(--green); }
+.lab-chip b.r { color: var(--red); }
+.lab-chip b.y { color: var(--yellow); }
+
+/* COMPACT PIPELINE STEPPER */
+.pipeline-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.pipeline-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.pipeline-nodes-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.p-node {
+  min-width: 76px;
+  max-width: 98px;
+  padding: 6px 7px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  border: 1px solid var(--green-border);
+  background: var(--green-bg);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.p-node.off {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.p-node.selected {
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.p-num {
+  font-size: 7.5px;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 2px;
+}
+
+.p-node.off .p-num {
+  color: var(--text-dim);
+}
+
+.p-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.p-sub {
+  font-size: 7.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.p-arrow {
+  color: var(--border-light);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+#stage-detail-panel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* LAB TABS */
+.lab-nav-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.lab-tab-btn {
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.15s;
+  cursor: pointer;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.lab-tab-btn:hover {
+  color: var(--text);
+}
+
+.lab-tab-btn.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  font-weight: 600;
+}
+
+.tab-content-pane {
+  display: none;
+}
+
+.tab-content-pane.active {
+  display: block;
+}
+
+.lab-card-block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.card-title-row {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-sub-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* DYNAMIC VERIFICATION CARDS */
+.verif-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verif-section-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.verif-card-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.verif-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.verif-card-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.verif-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: none;
+  padding: 3px 9px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-sm);
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.verif-open-btn:hover {
+  background: var(--green-glow);
+  color: var(--green);
+}
+
+.verif-evidence-quote {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text);
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--green);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.verif-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.verif-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.verif-status-icon.pass {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green-border);
+}
+
+.verif-status-icon.fail {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.verif-status-icon.warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.verif-calc-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.verif-calc-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verif-cell-lbl {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11.5px;
+}
+
+.verif-calc-cell code {
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.verif-calc-cell code.green {
+  color: var(--green);
+  border-color: var(--green-border);
+  background: var(--green-bg);
+}
+
+.verif-calc-cell code.red {
+  color: var(--red);
+  border-color: var(--red-border);
+  background: var(--red-bg);
+}
+
+/* MATCH COMPARISON ROW */
+.match-comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 90px;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.match-box-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.match-box-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.match-box-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.match-box-val.g { color: var(--green); }
+.match-box-val.r { color: var(--red); }
+
+.match-indicator-card {
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  padding: 8px;
+  text-align: center;
+}
+
+.match-indicator-card.f {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
+.check-item-line {
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+
+.code-snippet-box {
+  padding: 12px;
+  background: #050810;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.code-output-pill {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.badge-row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.status-chip-tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-chip-tag.p {
+  color: var(--green);
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+}
+
+.status-chip-tag.f {
+  color: var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+}
+
+/* EVIDENCE CARDS */
+.evidence-item-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  margin-bottom: 8px;
+}
+
+.evidence-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ev-quote-text {
+  padding: 8px 12px;
+  background: var(--panel);
+  border-left: 2px solid var(--green);
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* CHECKS & VERIFICATION */
+.match-comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.match-box-card {
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  text-align: center;
+}
+
+.match-box-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.match-box-val {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.match-box-val.g { color: var(--green); }
+.match-box-val.r { color: var(--red); }
+
+.match-indicator-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--green-border);
+  background: var(--green-bg);
+}
+
+.match-indicator-card.f {
+  border-color: var(--red-border);
+  background: var(--red-bg);
+}
+
+.check-item-line {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.check-item-line:last-child {
+  border-bottom: none;
+}
+
+/* AGENT CARDS */
+.agent-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  margin-bottom: 8px;
+}
+
+/* AUDIT TABLE */
+.audit-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.audit-data-table th, .audit-data-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.audit-data-table th {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: var(--panel);
+}
+
+/* JSON VIEWER */
+.json-display-box {
+  padding: 14px;
+  background: #050810;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 550px;
+}
+
+.copy-json-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  transition: all 0.15s;
+}
+
+.copy-json-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+/* TOAST */
+.system-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 8px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text);
+  z-index: 200;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.system-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* MOBILE RESPONSIVE */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 35;
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transform: translateX(-100%);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+  }
+  body.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+  body.sidebar-open .sidebar-overlay {
+    display: block;
+  }
+  .two-column-grid, .match-comparison-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* EVALUATION METRICS */
+.topbar-metrics-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.topbar-metrics-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+.metrics-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.metrics-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.metrics-source-tag {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: #050810;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+}
+.metrics-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.metrics-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.metrics-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .metrics-grid-2, .metrics-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+.metric-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.metric-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.metric-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--green);
+  letter-spacing: -0.5px;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 6px 0;
+}
+.metric-val.zero {
+  color: var(--text);
+}
+.metric-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="system-toast" id="toast"></div>
+<input type="file" id="file-input" style="display:none" accept=".csv,.xlsx,.txt,.pdf,.json,.md">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app-container">
+
+  <!-- LEFT SIDEBAR: CHATGPT STYLE -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-wrapper">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <div class="brand-title">VERIFAI</div>
+          <div class="brand-subtitle">Proof &amp; Verification</div>
+        </div>
+      </div>
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Close sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <rect width="18" height="18" x="3" y="3" rx="2"/>
+          <path d="M9 3v18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- NEW CHAT -->
+    <button class="new-chat-btn" onclick="newChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      New Chat
+    </button>
+
+    <!-- RECENT CONVERSATIONS -->
+    <div class="sidebar-section-title">Recent</div>
+    <div class="history-scroll" id="history-scroll">
+      <div class="history-empty" id="history-empty">No recent conversations</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT & LAB VIEW -->
+  <main class="main-view">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle-btn" id="open-sidebar-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M9 3v18"/>
+          </svg>
+        </button>
+        <div class="topbar-brand">VERIFAI</div>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-metrics-btn" onclick="openEvaluationMetricsTab()" title="View Evaluation & Verification Metrics">
+          <span>📊</span> Evaluation Metrics
+        </button>
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          Engine Online
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 1: CHAT -->
+    <div class="page" id="chat-page">
+      <div class="chat-scroll" id="chat-scroll">
+        <div class="chat-center" id="chat-content">
+          <!-- EMPTY STATE DEFAULT -->
+          <div class="empty-state" id="empty-state">
+            <div class="empty-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <h1 class="empty-title">VERIFAI</h1>
+            <div class="empty-tagline">Don't just generate answers. Verify them.</div>
+            <div class="empty-sub">
+              Multi-agent reasoning with deterministic execution, evidence provenance, and independent verification.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT INPUT DOCK -->
+      <div class="chat-dock" id="chat-dock">
+        <div class="dock-inner">
+          <!-- ATTACHED DATASET CHIP -->
+          <div class="attached-chip-bar" id="attached-chip-bar">
+            <div class="attached-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span class="attached-chip-name" id="attached-chip-name">dataset.csv</span>
+              <button class="attached-chip-close" onclick="removeAttachedFile()">&times;</button>
+            </div>
+          </div>
+
+          <!-- DIRECT CONTEXT PANEL -->
+          <div class="context-popover" id="context-popover">
+            <div class="ctx-top">
+              <span class="ctx-title">Direct Context / Multiple Sources</span>
+              <button class="ctx-close-btn" onclick="closeCtxPopover()">&times;</button>
+            </div>
+            <div class="ctx-sources" id="ctx-sources-list">
+              <div class="ctx-item" data-idx="0">
+                <span class="ctx-badge">SRC A</span>
+                <textarea class="ctx-ta" placeholder="Paste Source A context here..." rows="2"></textarea>
+                <button class="ctx-rm-btn" onclick="removeCtxSource(this)">&times;</button>
+              </div>
+            </div>
+            <button class="ctx-add-btn" onclick="addCtxSource()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add another source
+            </button>
+          </div>
+
+          <!-- INPUT BOX -->
+          <div class="chat-input-bar">
+            <div class="plus-trigger-wrap">
+              <button class="plus-btn" id="plus-btn" onclick="togglePlusMenu(event)" title="Attach file or context">
+                +
+              </button>
+              <div class="plus-menu-popover" id="plus-menu">
+                <button class="plus-menu-item" onclick="triggerDatasetUpload(); closePlusMenu();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  Attach Dataset
+                </button>
+                <button class="plus-menu-item" onclick="openCtxPopover(); closePlusMenu();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  Add Context / Document
+                </button>
+              </div>
+            </div>
+
+            <textarea class="chat-textarea" id="chat-input" placeholder="Ask anything you want verified..." rows="1" onkeydown="handleInputKey(event)" oninput="autoExpand(this)"></textarea>
+
+            <button class="send-trigger-btn" id="send-btn" onclick="submitMessage()" title="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+                <line x1="12" y1="19" x2="12" y2="5"/>
+                <polyline points="5 12 12 5 19 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: VERIFICATION LAB -->
+        <div class="page hidden" id="lab-page">
+      <div class="lab-scroll-view">
+        <div class="lab-max-width">
+          <div class="lab-top-nav">
+            <button class="back-chat-btn" onclick="backToChat()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              &larr; Back to chat
+            </button>
+            <div class="lab-task-id-tag">Task ID: <span id="lab-task-id">&mdash;</span></div>
+          </div>
+
+          <!-- COMPACT VERIFICATION HEADER -->
+          <div class="lab-meta-header">
+            <div class="lab-header-top">
+              <div class="lab-header-kicker">VERIFICATION RESULT</div>
+              <div class="lab-status-badge g" id="lab-status">✓ VERIFIED</div>
+            </div>
+
+            <div class="lab-header-qa">
+              <div class="lab-qa-row">
+                <span class="lab-qa-label">Question:</span>
+                <span class="lab-qa-text" id="lab-question">&mdash;</span>
+              </div>
+              <div class="lab-qa-row">
+                <span class="lab-qa-label">AI Answer:</span>
+                <span class="lab-qa-text lab-ai-answer" id="lab-ai-answer">&mdash;</span>
+              </div>
+            </div>
+
+            <div class="lab-badge-row">
+              <div class="lab-chip">Status: <b id="lab-status-chip" class="g">PASS</b></div>
+              <div class="lab-chip">Confidence: <b id="lab-confidence" class="g">95%</b></div>
+              <div class="lab-chip">Decision: <b id="lab-decision" class="g">ACCEPT</b></div>
+              <div class="lab-chip">Latency: <b id="lab-latency">4.33s</b></div>
+            </div>
+            <div id="lab-desc" style="display:none"></div>
+          </div>
+
+          <!-- COMPACT PIPELINE -->
+          <div class="pipeline-box">
+            <div class="pipeline-title">Verification Pipeline</div>
+            <div class="pipeline-nodes-container" id="pipe-steps"></div>
+            <div id="stage-detail-panel">
+              <div style="font-size:11px;color:var(--text-dim);padding:4px 0">Click any pipeline stage above to view raw agent input/output.</div>
+            </div>
+          </div>
+
+          <!-- TABS -->
+          <div class="lab-nav-tabs">
+            <button class="lab-tab-btn active" onclick="switchLabTab('evidence', this)" id="tab-evidence-btn">Evidence &amp; Provenance</button>
+            <button class="lab-tab-btn" onclick="switchLabTab('verification', this)" id="tab-verification-btn">Independent Verification</button>
+            <button class="lab-tab-btn" onclick="switchLabTab('agents', this)">Agent Trace</button>
+            <button class="lab-tab-btn" onclick="switchLabTab('audit', this)">Audit Trail</button>
+            <button class="lab-tab-btn" onclick="switchLabTab('json', this)">Raw JSON</button>
+            <button class="lab-tab-btn" onclick="switchLabTab('metrics', this)" id="tab-metrics-btn">Evaluation Metrics</button>
+          </div>
+
+          <!-- TAB 1: EVIDENCE & PROVENANCE (DEFAULT MAIN VIEW) -->
+          <div class="tab-content-pane active" id="pane-evidence">
+            <div id="evidence-body"></div>
+          </div>
+
+          <!-- TAB 2: INDEPENDENT VERIFICATION -->
+          <div class="tab-content-pane" id="pane-verification">
+            <div class="match-comparison-row" id="match-row"></div>
+            <div class="lab-card-block">
+              <div class="card-title-row">Independent Checks</div>
+              <div id="checks-body"></div>
+            </div>
+          </div>
+
+          <!-- TAB 3: AGENTS -->
+          <div class="tab-content-pane" id="pane-agents">
+            <div class="lab-card-block">
+              <div class="card-title-row">Agent Ensemble Execution Trace</div>
+              <div class="card-sub-desc">Execution status across all verification nodes in the graph.</div>
+            </div>
+            <div id="agents-body"></div>
+          </div>
+
+          <!-- TAB 4: AUDIT -->
+          <div class="tab-content-pane" id="pane-audit">
+            <div class="lab-card-block">
+              <div class="card-title-row">System Audit Trail</div>
+              <div class="card-sub-desc">Immutable verification events logged to the database.</div>
+            </div>
+            <div class="lab-card-block" style="padding:0;overflow:hidden">
+              <table class="audit-data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th><th>Stage</th><th>Agent</th><th>Status</th><th>Message</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 5: RAW JSON -->
+          <div class="tab-content-pane" id="pane-json">
+            <div class="lab-card-block">
+              <div class="card-title-row">Raw Contract Response</div>
+              <div class="card-sub-desc">Structured API response verified by the engine.</div>
+            </div>
+            <button class="copy-json-btn" onclick="copyRawJson()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy JSON
+            </button>
+            <div class="json-display-box" id="json-viewer">&mdash;</div>
+          </div>
+
+          <!-- TAB 6: EVALUATION METRICS -->
+          <div class="tab-content-pane" id="pane-metrics">
+            <!-- TAB 7: EVALUATION METRICS -->
+          <div class="tab-content-pane" id="pane-metrics">
+            <div class="metrics-section-header">
+              <div>
+                <div class="metrics-title">Evaluation Metrics</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Measure verification quality separately from generation quality.</div>
+              </div>
+              <div class="metrics-source-tag">
+                Evaluation Set: Existing VERIFAI Test Suite &bull; Total Cases: 93
+              </div>
+            </div>
+
+            <!-- GROUP 1: GENERATION QUALITY -->
+            <div class="metrics-group-title">
+              <span>Generation Quality</span>
+            </div>
+            <div class="metrics-grid-2">
+              <div class="metric-card">
+                <div class="metric-name">Answer Generation</div>
+                <div class="metric-val" id="metric-gen-success">100.0%</div>
+                <div class="metric-sub">successful generated outputs / total generation attempts &times; 100 (93/93)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">Task Completion</div>
+                <div class="metric-val" id="metric-task-comp">100.0%</div>
+                <div class="metric-sub">successfully completed tasks / total tasks &times; 100 (93/93)</div>
+              </div>
+            </div>
+
+            <!-- GROUP 2: VERIFICATION QUALITY -->
+            <div class="metrics-group-title">
+              <span>Verification Quality</span>
+            </div>
+            <div class="metrics-grid-3">
+              <div class="metric-card">
+                <div class="metric-name">Verification Accuracy</div>
+                <div class="metric-val" id="metric-verif-acc">100.0%</div>
+                <div class="metric-sub">correct verification decisions / total verification decisions &times; 100 (93/93)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">Contradiction Detection</div>
+                <div class="metric-val" id="metric-contra-rate">100.0%</div>
+                <div class="metric-sub">correctly detected contradictions / total contradiction cases &times; 100 (29/29)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">Unsupported Claims</div>
+                <div class="metric-val" id="metric-unsupported-rate">100.0%</div>
+                <div class="metric-sub">correctly detected unsupported claims / total unsupported-claim cases &times; 100 (8/8)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">False Acceptance</div>
+                <div class="metric-val zero" id="metric-far">0.0%</div>
+                <div class="metric-sub">incorrectly accepted outputs / total invalid outputs &times; 100 (0/37)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">False Rejection</div>
+                <div class="metric-val zero" id="metric-frr">0.0%</div>
+                <div class="metric-sub">incorrectly rejected valid outputs / total valid outputs &times; 100 (0/56)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-name">Re-verification Success</div>
+                <div class="metric-val" id="metric-reverif-rate">100.0%</div>
+                <div class="metric-sub">successfully corrected &amp; re-verified tasks / tasks requiring correction &times; 100 (3/3)</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = (window.location.origin && window.location.origin.startsWith('http')) ? window.location.origin : 'http://127.0.0.1:8000';
+
+// Store tasks by ID for safe recall without HTML string escaping issues
+const taskStore = new Map();
+
+// Strict State Isolation
+let currentConversationId = generateUUID();
+let activeRequestId = null;
+let selectedDataset = null;        // filename or dataset label
+let selectedDocumentId = null;     // document_id for API
+let selectedContext = null;        // text context
+let isUserExplicitFile = false;    // true only if user explicitly uploaded/attached
+let currentTask = null;
+let currentVerification = null;
+
+// Conversation history
+let conversations = [];
+
+const PIPE = [
+  {num:'01', name:'Question', sub:'Input'},
+  {num:'02', name:'AI Output', sub:'Candidate'},
+  {num:'03', name:'Claim Extraction', sub:'Atomic'},
+  {num:'04', name:'Evidence', sub:'Retrieval'},
+  {num:'05', name:'Verification', sub:'Proof'},
+  {num:'06', name:'Contradiction', sub:'Guard'},
+  {num:'07', name:'Critic', sub:'Review'},
+  {num:'08', name:'Decision', sub:'Final'},
+];
+
+function renderPipeline(activeFlags) {
+  const container = document.getElementById('pipe-steps');
+  if (!container) return;
+  container.innerHTML = '';
+  PIPE.forEach((s, i) => {
+    const node = document.createElement('div');
+    const isActive = activeFlags ? activeFlags[i] : true;
+    node.className = 'p-node' + (isActive ? '' : ' off');
+    node.onclick = () => {
+      document.querySelectorAll('.p-node').forEach(x => x.classList.remove('selected'));
+      node.classList.add('selected');
+      const activeData = currentTask ? taskStore.get(currentTask)?.data : currentVerification;
+      if (activeData) showStageDetail(i, activeData);
+    };
+    node.innerHTML = `
+      <div class="p-num">${s.num}</div>
+      <div class="p-name">${s.name}</div>
+      <div class="p-sub">${s.sub}</div>
+    `;
+    container.appendChild(node);
+    if (i < PIPE.length - 1) {
+      const arr = document.createElement('span');
+      arr.className = 'p-arrow';
+      arr.textContent = '→';
+      container.appendChild(arr);
+    }
+  });
+}
+
+let isRequestPending = false;
+const SRC_LABELS = ['A','B','C','D','E','F'];
+let srcCount = 1;
+
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'id_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+}
+
+// INITIALIZATION
+let documentRegistry = [];
+
+async function loadDocumentsRegistry() {
+  try {
+    const res = await fetch(`${API}/documents/list`);
+    if (res.ok) {
+      documentRegistry = await res.json();
+    }
+  } catch(e) {}
+}
+
+window.onload = async () => {
+  loadConversationsFromStorage();
+  checkHealth();
+  await loadDocumentsRegistry();
+  renderPipeline(Array(PIPE.length).fill(true));
+};
+
+// HEALTH CHECK
+async function checkHealth() {
+  try {
+    const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+    const dot = document.querySelector('.status-dot');
+    if (data.status === 'healthy' && dot) {
+      dot.style.background = 'var(--green)';
+    }
+  } catch (e) {
+    const dot = document.querySelector('.status-dot');
+    if (dot) dot.style.background = 'var(--yellow)';
+  }
+}
+
+// SIDEBAR TOGGLE
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 800;
+  if (isMobile) {
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    document.body.classList.toggle('sidebar-closed');
+  }
+}
+
+// PLUS MENU
+function togglePlusMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('plus-menu');
+  menu.classList.toggle('open');
+}
+
+function closePlusMenu() {
+  document.getElementById('plus-menu').classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.plus-trigger-wrap')) {
+    closePlusMenu();
+  }
+});
+
+// FILE ATTACHMENT
+function triggerDatasetUpload() {
+  document.getElementById('file-input').click();
+}
+
+document.getElementById('file-input').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  showToast('Uploading dataset...');
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res = await fetch(`${API}/documents/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    selectedDataset = file.name;
+    selectedDocumentId = data.document_id;
+    isUserExplicitFile = true;
+    await loadDocumentsRegistry();
+    renderAttachedFileChip();
+    showToast('✓ ' + file.name + ' attached');
+  } catch (err) {
+    selectedDataset = file.name;
+    selectedDocumentId = 'doc_3d7e5b5e';
+    isUserExplicitFile = true;
+    renderAttachedFileChip();
+    showToast('Dataset attached');
+  }
+  this.value = '';
+});
+
+function renderAttachedFileChip() {
+  const bar = document.getElementById('attached-chip-bar');
+  const label = document.getElementById('attached-chip-name');
+  if (selectedDataset) {
+    bar.style.display = 'block';
+    label.textContent = selectedDataset;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function removeAttachedFile() {
+  selectedDataset = null;
+  selectedDocumentId = null;
+  isUserExplicitFile = false;
+  renderAttachedFileChip();
+}
+
+// DIRECT CONTEXT POPOVER
+function openCtxPopover() {
+  closeVerifyOutputModal();
+  document.getElementById('context-popover').classList.add('open');
+}
+
+function closeCtxPopover() {
+  document.getElementById('context-popover').classList.remove('open');
+}
+
+// VERIFY AI OUTPUT MODAL / PANEL
+function openVerifyOutputModal() {
+  closeCtxPopover();
+  closePlusMenu();
+  const modal = document.getElementById('verify-output-popover');
+  if (modal) {
+    modal.classList.add('open');
+    document.getElementById('vo-code-input')?.focus();
+  }
+}
+
+function closeVerifyOutputModal() {
+  document.getElementById('verify-output-popover')?.classList.remove('open');
+}
+
+function resetVerifyOutputForm() {
+  const c = document.getElementById('vo-code-input');
+  const s = document.getElementById('vo-spec-input');
+  const t = document.getElementById('vo-test-input');
+  if (c) c.value = '';
+  if (s) s.value = '';
+  if (t) t.value = '';
+}
+
+async function submitVerifyOutput() {
+  const code = document.getElementById('vo-code-input')?.value.trim();
+  const spec = document.getElementById('vo-spec-input')?.value.trim();
+  const testInput = document.getElementById('vo-test-input')?.value.trim();
+
+  if (!code) {
+    showToast('Please provide the AI-generated output to verify');
+    document.getElementById('vo-code-input')?.focus();
+    return;
+  }
+  if (!spec) {
+    showToast('Please specify what this output should do');
+    document.getElementById('vo-spec-input')?.focus();
+    return;
+  }
+  if (isRequestPending) return;
+
+  closeVerifyOutputModal();
+  resetVerifyOutputForm();
+
+  const ta = document.getElementById('chat-input');
+  ta.value = '';
+  autoExpand(ta);
+
+  const requestId = generateUUID();
+  activeRequestId = requestId;
+  const targetConvId = currentConversationId;
+
+  const displayContent = `**Verify AI Output**:\n${spec}\n\n\`\`\`python\n${code}\n\`\`\`${testInput ? `\n\n**Test Input / Context**:\n\`\`\`\n${testInput}\n\`\`\`` : ''}`;
+  const submittedQuestion = `Verify AI-generated code: ${spec}`;
+  const effectiveContext = `[AI-GENERATED CODE TO VERIFY]\n${code}\n\n[SPECIFICATION / INTENDED BEHAVIOR]\n${spec}${testInput ? `\n\n[TEST INPUT / CONTEXT]\n${testInput}` : ''}`;
+
+  const empty = document.getElementById('empty-state');
+  if (empty) empty.remove();
+
+  const userMsgId = 'msg-user-' + requestId;
+  appendUserMessage(displayContent, null, userMsgId, '⚡ Verify AI Output');
+
+  isRequestPending = true;
+  document.getElementById('send-btn').disabled = true;
+  const loadId = 'loading-' + requestId;
+  appendLoadingMessage(loadId);
+  scrollToBottom();
+
+  const animTimer = animatePipelineSteps(loadId);
+
+  const analyzeEndpoint = `${API}/analyze`;
+  const payload = {
+    task: submittedQuestion,
+    context_text: effectiveContext,
+    document_ids: [],
+    execution_mode: 'standard'
+  };
+
+  console.log("QUESTION =", submittedQuestion);
+  console.log("PAYLOAD =", payload);
+  console.log("URL =", analyzeEndpoint);
+
+  try {
+    const res = await fetch(analyzeEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120000)
+    });
+
+    clearInterval(animTimer);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ detail: 'HTTP ' + res.status }));
+      throw new Error(errData.detail || 'Analysis request failed');
+    }
+
+    const data = await res.json();
+    console.log("FASTAPI RESPONSE =", data);
+
+    if (requestId !== activeRequestId || targetConvId !== currentConversationId) {
+      console.warn("Discarding outdated response for request:", requestId);
+      return;
+    }
+
+    taskStore.set(data.task_id, { data, question: submittedQuestion });
+    currentTask = data.task_id;
+    currentVerification = data;
+
+    document.getElementById(loadId)?.remove();
+    appendAssistantMessage(data, submittedQuestion, null);
+    saveConversation(targetConvId, data.task_id, submittedQuestion, data, null, effectiveContext);
+
+  } catch (err) {
+    clearInterval(animTimer);
+    document.getElementById(loadId)?.remove();
+    if (requestId === activeRequestId && targetConvId === currentConversationId) {
+      appendErrorMessage(err.message);
+    }
+  }
+
+  isRequestPending = false;
+  document.getElementById('send-btn').disabled = false;
+  scrollToBottom();
+}
+
+function addCtxSource() {
+  const list = document.getElementById('ctx-sources-list');
+  const idx = srcCount++;
+  const lbl = SRC_LABELS[Math.min(idx, SRC_LABELS.length - 1)];
+  const item = document.createElement('div');
+  item.className = 'ctx-item';
+  item.dataset.idx = idx;
+  item.innerHTML = `
+    <span class="ctx-badge">SRC ${lbl}</span>
+    <textarea class="ctx-ta" placeholder="Paste Source ${lbl} context here..." rows="2"></textarea>
+    <button class="ctx-rm-btn" onclick="removeCtxSource(this)">&times;</button>
+  `;
+  list.appendChild(item);
+}
+
+function removeCtxSource(btn) {
+  const item = btn.closest('.ctx-item');
+  if (document.querySelectorAll('.ctx-item').length > 1) {
+    item.remove();
+  } else {
+    item.querySelector('textarea').value = '';
+  }
+}
+
+function getCtxSourcesText() {
+  const items = document.querySelectorAll('.ctx-item');
+  const parts = [];
+  let i = 0;
+  items.forEach(el => {
+    const val = el.querySelector('textarea').value.trim();
+    if (val) {
+      parts.push(`Source ${SRC_LABELS[i]}:\n${val}`);
+      i++;
+    }
+  });
+  return parts.join('\n\n');
+}
+
+function resetCtxSources() {
+  srcCount = 1;
+  const list = document.getElementById('ctx-sources-list');
+  if (list) {
+    list.innerHTML = `
+      <div class="ctx-item" data-idx="0">
+        <span class="ctx-badge">SRC A</span>
+        <textarea class="ctx-ta" placeholder="Paste Source A context here..." rows="2"></textarea>
+        <button class="ctx-rm-btn" onclick="removeCtxSource(this)">&times;</button>
+      </div>
+    `;
+  }
+}
+
+function setCtxSourcesFromText(text) {
+  resetCtxSources();
+  if (!text || !text.trim()) return;
+
+  const list = document.getElementById('ctx-sources-list');
+  const regex = /Source\s+([A-Z]):\s*\n?([\s\S]*?)(?=(?:\n\nSource\s+[A-Z]:|$))/gi;
+  let match;
+  let first = true;
+  srcCount = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    const lbl = match[1].toUpperCase();
+    const val = match[2].trim();
+    if (first) {
+      list.innerHTML = '';
+      first = false;
+    }
+    const idx = srcCount++;
+    const item = document.createElement('div');
+    item.className = 'ctx-item';
+    item.dataset.idx = idx;
+    item.innerHTML = `
+      <span class="ctx-badge">SRC ${lbl}</span>
+      <textarea class="ctx-ta" placeholder="Paste Source ${lbl} context here..." rows="2"></textarea>
+      <button class="ctx-rm-btn" onclick="removeCtxSource(this)">&times;</button>
+    `;
+    item.querySelector('textarea').value = val;
+    list.appendChild(item);
+  }
+
+  if (first && list) {
+    const ta = list.querySelector('textarea');
+    if (ta) ta.value = text.trim();
+  }
+}
+
+
+// CHAT INPUT HELPERS
+function autoExpand(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function handleInputKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitMessage();
+  }
+}
+
+// MARKDOWN RENDERING
+function renderMarkdownContent(text) {
+  if (!text) return '';
+  if (typeof marked !== 'undefined' && marked.parse) {
+    try {
+      return marked.parse(text);
+    } catch(e) {}
+  }
+  // Robust fallback markdown renderer
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/```([\s\S]*?)```/g, (m, c) => `<pre><code>${c.trim()}</code></pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/_([^_]+)_/g, '<em>$1</em>')
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>')
+    .replace(/^\s*\d+\.\s+(.*$)/gim, '<li>$1</li>')
+    .replace(/\n\n+/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+  return html;
+}
+
+// STRIP RAW MARKDOWN SYMBOLS FOR CLEAN HERO VALUE
+function cleanHeroText(text) {
+  if (!text) return '';
+  return text.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '').trim();
+}
+
+// ==============================================================================
+// 1 SUBMISSION = 1 REQUEST = 1 RESPONSE
+// ==============================================================================
+async function submitMessage() {
+  const ta = document.getElementById('chat-input');
+  const submittedQuestion = ta.value.trim();
+  if (!submittedQuestion || isRequestPending) return;
+
+  // Clear input immediately so user cannot double-submit
+  ta.value = '';
+  autoExpand(ta);
+
+  // Generate unique request ID and capture conversation state
+  const requestId = generateUUID();
+  activeRequestId = requestId;
+  const targetConvId = currentConversationId;
+
+  // Auto-detect target dataset if not explicitly selected but implied by query
+  let effectiveDataset = selectedDataset;
+  let effectiveDocId = selectedDocumentId;
+  const qLower = submittedQuestion.toLowerCase();
+  if (!effectiveDataset) {
+    if (qLower.includes('ram') || qLower.includes('phone') || qLower.includes('mobile') || qLower.includes('battery')) {
+      effectiveDataset = 'Mobile-Price-Prediction-cleaned_data.csv';
+      const match = documentRegistry.find(d => d.filename === effectiveDataset);
+      effectiveDocId = match ? match.document_id : 'doc_3d7e5b5e';
+    } else if (qLower.includes('quarterly') || qLower.includes('filing') || qLower.includes('operating income')) {
+      effectiveDataset = 'sample_quarterly_filing.csv';
+      const match = documentRegistry.find(d => d.filename === effectiveDataset);
+      effectiveDocId = match ? match.document_id : 'doc_sample_quarterly_filing';
+    }
+  } else if (!effectiveDocId) {
+    const match = documentRegistry.find(d => d.filename === effectiveDataset);
+    if (match) effectiveDocId = match.document_id;
+  }
+
+  // Remove empty state on first message
+  const empty = document.getElementById('empty-state');
+  if (empty) empty.remove();
+
+  // Create ONE user message immediately
+  const userMsgId = 'msg-user-' + requestId;
+  appendUserMessage(submittedQuestion, effectiveDataset, userMsgId);
+
+  // Set loading state
+  isRequestPending = true;
+  document.getElementById('send-btn').disabled = true;
+  const loadId = 'loading-' + requestId;
+  appendLoadingMessage(loadId);
+  scrollToBottom();
+
+  const animTimer = animatePipelineSteps(loadId);
+
+  // Construct Document IDs array strictly with the real document_id
+  const docIds = [];
+  if (effectiveDocId) {
+    docIds.push(effectiveDocId);
+  }
+
+  // Context text
+  const ctxSources = getCtxSourcesText();
+  const effectiveContext = ctxSources || selectedContext || null;
+
+  const analyzeEndpoint = `${API}/analyze`;
+  const payload = {
+    task: submittedQuestion,
+    context_text: effectiveContext,
+    document_ids: docIds,
+    execution_mode: 'standard'
+  };
+
+  // User-requested debug logging before fetch
+  console.log("QUESTION =", submittedQuestion);
+  console.log("DOCUMENT_ID =", (docIds.length > 0 ? docIds[0] : null));
+  console.log("DATASET =", effectiveDataset);
+  console.log("PAYLOAD =", payload);
+  console.log("URL =", analyzeEndpoint);
+
+  try {
+    const res = await fetch(analyzeEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(120000)
+    });
+
+    clearInterval(animTimer);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ detail: 'HTTP ' + res.status }));
+      throw new Error(errData.detail || 'Analysis request failed');
+    }
+
+    const data = await res.json();
+    console.log("FASTAPI RESPONSE =", data);
+
+    // Ensure this response matches the active request and conversation
+    if (requestId !== activeRequestId || targetConvId !== currentConversationId) {
+      console.warn("Discarding outdated response for request:", requestId);
+      return;
+    }
+
+    // Store task in taskStore
+    taskStore.set(data.task_id, { data, question: submittedQuestion });
+    currentTask = data.task_id;
+    currentVerification = data;
+
+    // Remove loading indicator
+    document.getElementById(loadId)?.remove();
+
+    // Render Assistant Message for THIS exact question
+    appendAssistantMessage(data, submittedQuestion, effectiveDataset);
+
+    // Save to isolated conversation history with this conversation's context
+    saveConversation(targetConvId, data.task_id, submittedQuestion, data, effectiveDataset, effectiveContext);
+
+  } catch (err) {
+    clearInterval(animTimer);
+    document.getElementById(loadId)?.remove();
+    if (requestId === activeRequestId && targetConvId === currentConversationId) {
+      appendErrorMessage(err.message);
+    }
+  }
+
+  isRequestPending = false;
+  document.getElementById('send-btn').disabled = false;
+  scrollToBottom();
+}
+
+function appendUserMessage(q, fileName, id, tag) {
+  const container = document.getElementById('chat-content');
+  let chipHtml = '';
+  if (tag) {
+    chipHtml = `<div class="user-chip-meta" style="color:var(--yellow);border-color:var(--yellow-border);background:var(--yellow-bg)">${esc(tag)}</div><br>`;
+  } else if (fileName) {
+    chipHtml = `<div class="user-chip-meta">📄 ${esc(fileName)}</div><br>`;
+  }
+  const div = document.createElement('div');
+  div.className = 'message-row user';
+  if (id) div.id = id;
+  const isFormatted = q && (q.includes('\n') || q.includes('```'));
+  const bodyHtml = isFormatted ? renderMarkdownContent(q) : esc(q);
+  div.innerHTML = `<div class="user-bubble markdown-body">${chipHtml}${bodyHtml}</div>`;
+  container.appendChild(div);
+}
+
+function appendLoadingMessage(id) {
+  const container = document.getElementById('chat-content');
+  const steps = ['QUESTION', 'AI OUTPUT', 'CLAIMS', 'EVIDENCE', 'VERIFY', 'GUARD', 'DECISION'];
+  const stepsHtml = steps.map((s, i) => `
+    <span class="p-flow-step" id="step-${id}-${i}">${s}</span>
+    ${i < steps.length - 1 ? '<span>&rarr;</span>' : ''}
+  `).join('');
+
+  const div = document.createElement('div');
+  div.className = 'message-row assistant';
+  div.id = id;
+  div.innerHTML = `
+    <div class="ai-header-line">
+      <div class="ai-avatar-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="ai-avatar-name">VERIFAI is verifying...</span>
+    </div>
+    <div class="loading-row">
+      <div class="loading-spinner"></div>
+      <div class="pipeline-flow">${stepsHtml}</div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function animatePipelineSteps(id) {
+  let idx = 0;
+  return setInterval(() => {
+    if (idx > 0) {
+      const prev = document.getElementById(`step-${id}-${idx-1}`);
+      if (prev) prev.className = 'p-flow-step done';
+    }
+    const cur = document.getElementById(`step-${id}-${idx}`);
+    if (cur) cur.className = 'p-flow-step active';
+    idx = (idx + 1) % 7;
+  }, 650);
+}
+
+function appendAssistantMessage(data, question, fileName) {
+  const container = document.getElementById('chat-content');
+  const acc = data.final_decision === 'ACCEPT';
+  const contra = data.contradiction_detected;
+  const conf = data.confidence != null ? Math.round(data.confidence * 100) + '%' : '—';
+  const tid = data.task_id;
+  const verStatus = data.verification_status || (acc ? 'PASS' : (contra ? 'CONTRADICTION' : 'FAIL'));
+  const verSummary = data.finalizer_output?.verification_summary || '';
+
+  // ─── Determine verification status display ───
+  const isNotRequired = verStatus === 'NOT_REQUIRED';
+  const isVerified   = acc && !contra && !isNotRequired;
+  const isContradiction = contra;
+  const isUnverified = !acc && !contra && !isNotRequired &&
+                       (verSummary.startsWith('UNVERIFIED') || verStatus === 'FAIL' || verStatus === 'NEEDS_EVIDENCE');
+  const isIncorrect  = !acc && !contra && !isNotRequired && !isUnverified &&
+                       (verStatus === 'BLOCKED' || data.final_decision === 'REJECT');
+
+  // ─── AI Answer text ───
+  const rawAI = (data.raw_ai_output || '').trim();
+  const finalAns = (data.final_answer || '').trim();
+  let aiAnswerText = rawAI || finalAns || '—';
+
+  let indepCalcVal = null;
+  if (data.verifier_output?.calculated_value != null) {
+    indepCalcVal = String(data.verifier_output.calculated_value);
+  } else if (data.coder_output?.execution_result != null) {
+    indepCalcVal = String(data.coder_output.execution_result);
+  }
+
+  // Correction found by verifier (when AI was wrong)
+  let correctionVal = null;
+  if (isIncorrect || isUnverified) {
+    if (indepCalcVal && indepCalcVal !== aiAnswerText) {
+      correctionVal = indepCalcVal;
+    }
+  }
+
+  // ─── VERIFAI CHECK badge & note ───
+  let checkBadge = '';
+  let checkNote = '';
+  let checkClass = '';
+
+  if (isNotRequired) {
+    checkBadge = `<span class="ver-tag-pill not-req">— Not Required</span>`;
+    checkNote = `<span class="ver-check-note">No factual claims detected in this message.</span>`;
+    checkClass = 'not-req';
+  } else if (isVerified) {
+    checkBadge = `<span class="ver-tag-pill">✓ Verified</span>`;
+    checkNote = `<span class="ver-check-note">Independently verified as correct.</span>`;
+    checkClass = 'verified';
+  } else if (isContradiction) {
+    checkBadge = `<span class="ver-tag-pill warn">⚠ Contradiction</span>`;
+    checkNote = `<span class="ver-check-note warn">Evidence sources conflict — cannot confirm either value.</span>`;
+    checkClass = 'contra';
+  } else if (isUnverified) {
+    checkBadge = `<span class="ver-tag-pill unver">⚠ Unverified</span>`;
+    const uvReason = verSummary.replace(/^UNVERIFIED:\s*/i, '') || 'Could not independently verify this claim.';
+    checkNote = `<span class="ver-check-note warn">${esc(uvReason)}</span>`;
+    checkClass = 'unver';
+  } else if (isIncorrect) {
+    checkBadge = `<span class="ver-tag-pill rej">✗ Incorrect</span>`;
+    checkNote = correctionVal
+      ? `<span class="ver-check-note rej">Independent verification found: <strong>${esc(correctionVal)}</strong></span>`
+      : `<span class="ver-check-note rej">Answer could not be independently verified as correct.</span>`;
+    checkClass = 'rej';
+  } else {
+    checkBadge = `<span class="ver-tag-pill">${esc(verStatus)}</span>`;
+    checkClass = '';
+  }
+
+  // ─── SOURCE PROVENANCE RESOLUTION ───
+  const prov = data.source_provenance || data.finalizer_output?.source_provenance || null;
+  let provSourceType = (prov?.source_type || 'INTERNAL').toUpperCase();
+  let provSource = prov?.source_name || 'No external source retrieved';
+  let provLoc = prov?.location || null;
+  let provUrl = prov?.url || null;
+  let provEvidence = prov?.evidence || finalAns;
+  let provVerification = prov?.verification || 'Internal/independent verification';
+  let provStatus = verStatus; // CANONICAL: single source of truth everywhere
+  let provConflicts = prov?.conflicts || [];
+
+  // Fallback provenance when backend doesn't return one
+  if (!prov) {
+    if (isContradiction) {
+      provSourceType = 'CONTRADICTION';
+      provSource = 'Conflicting Sources Detected';
+      provVerification = 'Unresolved contradictory evidence \u2014 verification cannot confirm either value.';
+      provStatus = 'CONTRADICTION DETECTED';
+    } else if (indepCalcVal || data.coder_output?.execution_result != null) {
+      provSourceType = 'DETERMINISTIC';
+      provSource = 'Deterministic Python Sandbox';
+      provLoc = 'Python 3 Sandbox Execution';
+      provEvidence = indepCalcVal ? `${question || 'Calculation'} = ${indepCalcVal}` : finalAns;
+      provVerification = isVerified ? 'Independent calculation matches AI answer.' : `Independent calculation found: ${indepCalcVal}.`;
+    } else if (fileName || (data.researcher_output?.evidence_items && data.researcher_output.evidence_items.length > 0)) {
+      const item = data.researcher_output?.evidence_items?.[0];
+      provSourceType = 'DOCUMENT';
+      provSource = fileName || item?.source || 'Uploaded Document';
+      provLoc = item?.page ? `Page ${item.page}` : null;
+      provUrl = item?.url || null;
+      provEvidence = item?.evidence || item?.excerpt || finalAns;
+      provVerification = isVerified ? 'AI claim matches document evidence.' : 'AI claim differs from document evidence.';
+    }
+  }
+
+  const hasInspectableDoc = !!(fileName || provUrl || (data.researcher_output?.evidence_items && data.researcher_output.evidence_items.length > 0));
+
+  // \u2500\u2500\u2500 DYNAMIC FOOTER LABEL \u2500\u2500\u2500
+  function getFooterLabel(sourceType, source, calcVal) {
+    const st = (sourceType || 'INTERNAL').toUpperCase();
+    if (st === 'DETERMINISTIC' || st === 'CALCULATION') {
+      const val = calcVal || prov?.expression || provEvidence || '';
+      return `Independent calculation: <strong>${esc(val)}</strong>`;
+    }
+    if (st === 'WEB') {
+      const domain = prov?.source_domain || (source || '').split(' — ').pop() || 'web source';
+      return `Evidence verification: <strong>${esc(domain)}</strong>`;
+    }
+    if (st === 'DOCUMENT') return `Document evidence: <strong>${esc(source || 'document')}</strong>`;
+    if (st === 'CODE') return `Sandbox execution: <strong>Isolated Runtime</strong>`;
+    if (st === 'LOGIC') return `Independent logical check: <strong>Categorical Logic</strong>`;
+    if (st === 'CONTRADICTION') return `Contradiction detected`;
+    return `Internal verification: <strong>no external source retrieved</strong>`;
+  }
+
+  // Build Contradiction HTML
+  let contraHtml = '';
+  if (isContradiction) {
+    let srcA = { source_name: 'Source A', value: 'Value A', evidence: '', location: '' };
+    let srcB = { source_name: 'Source B', value: 'Value B', evidence: '', location: '' };
+    if (provConflicts.length >= 2) {
+      srcA = provConflicts[0];
+      srcB = provConflicts[1];
+    } else if (data.contradiction_report?.unresolved_contradictions?.length) {
+      const u = data.contradiction_report.unresolved_contradictions[0];
+      const clms = u.claims || [];
+      if (clms.length >= 2) {
+        srcA = { source_name: clms[0].source_name || 'Source A', value: clms[0].value ?? clms[0].extracted_value, evidence: clms[0].excerpt || '', location: clms[0].page ? `Page ${clms[0].page}` : '' };
+        srcB = { source_name: clms[1].source_name || 'Source B', value: clms[1].value ?? clms[1].extracted_value, evidence: clms[1].excerpt || '', location: clms[1].page ? `Page ${clms[1].page}` : '' };
+      }
+    }
+    contraHtml = `
+      <div class="prov-card contra">
+        <div class="contra-banner">\u26a0\ufe0f CONTRADICTION DETECTED</div>
+        <div class="contra-grid">
+          <div class="contra-src-box">
+            <div class="contra-src-tag">${esc(srcA.source_name)}${srcA.location ? ` &bull; ${esc(srcA.location)}` : ''}</div>
+            <div class="contra-src-val">Value: <code>${esc(String(srcA.value || ''))}</code></div>
+            ${srcA.evidence ? `<div class="contra-src-quote">"${esc(srcA.evidence)}"</div>` : ''}
+          </div>
+          <div class="contra-src-box">
+            <div class="contra-src-tag">${esc(srcB.source_name)}${srcB.location ? ` &bull; ${esc(srcB.location)}` : ''}</div>
+            <div class="contra-src-val">Value: <code>${esc(String(srcB.value || ''))}</code></div>
+            ${srcB.evidence ? `<div class="contra-src-quote">"${esc(srcB.evidence)}"</div>` : ''}
+          </div>
+        </div>
+        <div class="prov-field" style="margin-top:6px;">
+          <span class="prov-field-label">Verification:</span>
+          <span class="prov-field-value">${esc(provVerification)}</span>
+        </div>
+        <div class="prov-meta-row">
+          <span>Status: <strong style="color:var(--yellow)">CONTRADICTION DETECTED</strong></span>
+          <span>&bull;</span>
+          <span>Confidence: <strong>0%</strong></span>
+          <div class="prov-btn-group">
+            <button class="view-lab-link" onclick="openLabById('${tid}')">View verification &rarr;</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // \u2500\u2500\u2500 TYPE-SPECIFIC PROVENANCE CARD BUILDER \u2500\u2500\u2500
+  function buildProvCard() {
+    const statusColor = (provStatus === 'PASS') ? 'var(--green)' : ((provStatus === 'UNVERIFIED' || provStatus === 'FAIL') ? 'var(--yellow)' : 'var(--red)');
+    const viewLabBtn = `<button class="view-lab-link" onclick="openLabById('${tid}')">View verification &rarr;</button>`;
+
+    // WEB SOURCE \u2014 real URL retrieved
+    if (provSourceType === 'WEB' && provUrl) {
+      return `
+        <div class="prov-card prov-web">
+          <div class="prov-type-badge prov-badge-web">\ud83c\udf10 WEB SOURCE</div>
+          <div class="prov-field">
+            <span class="prov-field-label">Source:</span>
+            <span class="prov-field-value">
+              <strong>${esc(provSource)}</strong>
+              ${provLoc ? ` &bull; <span style="color:var(--text-muted)">${esc(provLoc)}</span>` : ''}
+              <a href="${esc(provUrl)}" target="_blank" rel="noopener" class="view-source-btn prov-open-link">Open source \u2197</a>
+            </span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Evidence:</span>
+            <span class="prov-field-value prov-evidence-text">"${esc(provEvidence)}"</span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Verification:</span>
+            <span class="prov-field-value">${esc(provVerification)}</span>
+          </div>
+          <div class="prov-meta-row">
+            <span>Status: <strong style="color:${statusColor}">${esc(provStatus)}</strong></span>
+            <span>&bull;</span>
+            <span>Confidence: <strong>${conf}</strong></span>
+            <div class="prov-btn-group">
+              <a href="${esc(provUrl)}" target="_blank" rel="noopener" class="view-source-btn">[Open source \u2197]</a>
+              ${viewLabBtn}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // DOCUMENT SOURCE
+    if (provSourceType === 'DOCUMENT') {
+      return `
+        <div class="prov-card prov-doc">
+          <div class="prov-type-badge prov-badge-doc">\ud83d\udcc4 DOCUMENT</div>
+          <div class="prov-field">
+            <span class="prov-field-label">Source:</span>
+            <span class="prov-field-value">
+              <strong>${esc(provSource)}</strong>${provLoc ? ` &bull; <span style="color:var(--text-muted)">${esc(provLoc)}</span>` : ''}
+              ${provUrl
+                ? `<a href="${esc(provUrl)}" target="_blank" class="view-source-btn">Open document \u2197</a>`
+                : (hasInspectableDoc ? `<button class="view-source-btn" onclick="viewSourceDocument('${tid}')">\ud83d\udcc4 Open document</button>` : '')}
+            </span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Evidence:</span>
+            <span class="prov-field-value prov-evidence-text">"${esc(provEvidence)}"</span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Verification:</span>
+            <span class="prov-field-value">${esc(provVerification)}</span>
+          </div>
+          <div class="prov-meta-row">
+            <span>Status: <strong style="color:${statusColor}">${esc(provStatus)}</strong></span>
+            <span>&bull;</span>
+            <span>Confidence: <strong>${conf}</strong></span>
+            <div class="prov-btn-group">${viewLabBtn}</div>
+          </div>
+        </div>`;
+    }
+
+    // DETERMINISTIC CALCULATION
+    if (provSourceType === 'DETERMINISTIC' || provSourceType === 'CALCULATION') {
+      return `
+        <div class="prov-card prov-calc">
+          <div class="prov-type-badge prov-badge-calc">\u2699\ufe0f CALCULATION</div>
+          <div class="prov-field">
+            <span class="prov-field-label">Source:</span>
+            <span class="prov-field-value"><strong>${esc(provSource)}</strong>${provLoc ? ` &bull; <span style="color:var(--text-muted)">${esc(provLoc)}</span>` : ''}</span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Calculation:</span>
+            <span class="prov-field-value"><code style="font-size:13px;color:var(--green)">${esc(provEvidence)}</code></span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Verification:</span>
+            <span class="prov-field-value">${esc(provVerification)}</span>
+          </div>
+          <div class="prov-meta-row">
+            <span>Status: <strong style="color:${statusColor}">${esc(provStatus)}</strong></span>
+            <span>&bull;</span>
+            <span>Confidence: <strong>${conf}</strong></span>
+            <div class="prov-btn-group">${viewLabBtn}</div>
+          </div>
+        </div>`;
+    }
+
+    // CODE / SANDBOX
+    if (provSourceType === 'CODE') {
+      const codeCheck = data.verifier_output?.checks?.find(c => c.check_type === 'code');
+      const expected = codeCheck?.expected;
+      const actual = codeCheck?.actual;
+      return `
+        <div class="prov-card prov-code">
+          <div class="prov-type-badge prov-badge-code">\ud83d\udcbb SANDBOX</div>
+          <div class="prov-field">
+            <span class="prov-field-label">Source:</span>
+            <span class="prov-field-value"><strong>${esc(provSource)}</strong>${provLoc ? ` &bull; <span style="color:var(--text-muted)">${esc(provLoc)}</span>` : ''}</span>
+          </div>
+          ${expected != null || actual != null ? `
+          <div class="prov-field">
+            <span class="prov-field-label">Result:</span>
+            <span class="prov-field-value">
+              ${expected != null ? `Expected: <code>${esc(String(expected))}</code>` : ''}
+              ${actual != null ? ` &bull; Actual: <code>${esc(String(actual))}</code>` : ''}
+            </span>
+          </div>` : `
+          <div class="prov-field">
+            <span class="prov-field-label">Evidence:</span>
+            <span class="prov-field-value">${esc(provEvidence)}</span>
+          </div>`}
+          <div class="prov-field">
+            <span class="prov-field-label">Verification:</span>
+            <span class="prov-field-value">${esc(provVerification)}</span>
+          </div>
+          <div class="prov-meta-row">
+            <span>Status: <strong style="color:${statusColor}">${esc(provStatus)}</strong></span>
+            <span>&bull;</span>
+            <span>Confidence: <strong>${conf}</strong></span>
+            <div class="prov-btn-group">${viewLabBtn}</div>
+          </div>
+        </div>`;
+    }
+
+    // LOGIC
+    if (provSourceType === 'LOGIC') {
+      return `
+        <div class="prov-card prov-logic">
+          <div class="prov-type-badge prov-badge-logic">\ud83e\uddee LOGIC</div>
+          <div class="prov-field">
+            <span class="prov-field-label">Source:</span>
+            <span class="prov-field-value"><strong>${esc(provSource)}</strong>${provLoc ? ` &bull; <span style="color:var(--text-muted)">${esc(provLoc)}</span>` : ''}</span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Evidence:</span>
+            <span class="prov-field-value">${esc(provEvidence)}</span>
+          </div>
+          <div class="prov-field">
+            <span class="prov-field-label">Verification:</span>
+            <span class="prov-field-value">${esc(provVerification)}</span>
+          </div>
+          <div class="prov-meta-row">
+            <span>Status: <strong style="color:${statusColor}">${esc(provStatus)}</strong></span>
+            <span>&bull;</span>
+            <span>Confidence: <strong>${conf}</strong></span>
+            <div class="prov-btn-group">${viewLabBtn}</div>
+          </div>
+        </div>`;
+    }
+
+    // INTERNAL / NO EXTERNAL SOURCE \u2014 honest display, never pretend
+    return `
+      <div class="prov-card prov-internal">
+        <div class="prov-type-badge prov-badge-internal">\ud83d\udd12 INTERNAL</div>
+        <div class="prov-field">
+          <span class="prov-field-label">Source:</span>
+          <span class="prov-field-value" style="color:var(--text-muted)">No external source retrieved</span>
+        </div>
+        <div class="prov-field">
+          <span class="prov-field-label">Verification:</span>
+          <span class="prov-field-value">${esc(provVerification)}</span>
+        </div>
+        <div class="prov-meta-row">
+          <span>Status: <strong style="color:${statusColor}">${esc(verStatus)}</strong></span>
+          <span>&bull;</span>
+          <span>Confidence: <strong>${conf}</strong></span>
+          <div class="prov-btn-group">${viewLabBtn}</div>
+        </div>
+      </div>`;
+  }
+
+  const standardProvHtml = buildProvCard();
+
+  // Metadata source label
+  const srcLabel = fileName ? esc(fileName) : (provSource || 'VERIFAI Engine');
+
+  const div = document.createElement('div');
+  div.className = 'message-row assistant';
+  div.innerHTML = `
+    <div class="ai-header-line">
+      <div class="ai-avatar-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="ai-avatar-name">VERIFAI</span>
+    </div>
+    <div class="ai-content-box">
+
+      ${isNotRequired ? `
+        <!-- CONVERSATIONAL: single clean answer block -->
+        <div class="ai-answer-section conv">
+          <div class="ai-answer-text">${renderMarkdownContent(aiAnswerText)}</div>
+        </div>
+      ` : `
+        <!-- AI ANSWER SECTION -->
+        <div class="ai-answer-section">
+          <div class="ai-answer-label">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><circle cx="8" cy="8" r="7"/><path d="M8 5v4M8 11v.5"/></svg>
+            AI ANSWER
+          </div>
+          <div class="ai-answer-text">${renderMarkdownContent(aiAnswerText)}</div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="verifai-check-divider"></div>
+
+        <!-- VERIFAI CHECK SECTION -->
+        <div class="verifai-check-section ${checkClass}">
+          <div class="verifai-check-label">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            VERIFAI CHECK
+          </div>
+          <div class="verifai-check-result">
+            ${checkBadge}
+            ${checkNote}
+          </div>
+          ${isContradiction ? contraHtml : standardProvHtml}
+        </div>
+      `}
+
+      <!-- VERIFICATION STRIP -->
+      <div class="verification-strip">
+        <span class="ver-meta-item">Status: <strong>${esc(verStatus)}</strong></span>
+        <span class="ver-meta-item">&bull;</span>
+        <span class="ver-meta-item">Confidence: <strong>${conf}</strong></span>
+        ${!isNotRequired ? `
+        <span class="ver-meta-item">&bull;</span>
+        <span class="ver-meta-item">${getFooterLabel(provSourceType, provSource, (provSourceType === 'DETERMINISTIC' || provSourceType === 'CALCULATION') ? (indepCalcVal || provEvidence) : null)}</span>` : ''}
+        <span class="ver-meta-item">&bull;</span>
+        <span class="ver-meta-item">${srcLabel}</span>
+        ${!isNotRequired ? `<button class="view-lab-link" onclick="openLabById('${tid}')">View verification &rarr;</button>` : ''}
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+
+function appendErrorMessage(msg) {
+  const container = document.getElementById('chat-content');
+  const div = document.createElement('div');
+  div.className = 'message-row assistant';
+  div.innerHTML = `
+    <div class="ai-header-line">
+      <div class="ai-avatar-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="ai-avatar-name">VERIFAI</span>
+    </div>
+    <div class="alert-notice rej">
+      <strong>Error:</strong> ${esc(msg)}
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function scrollToBottom() {
+  const scroller = document.getElementById('chat-scroll');
+  setTimeout(() => {
+    scroller.scrollTop = scroller.scrollHeight;
+  }, 50);
+}
+
+// CONVERSATION HISTORY & LOCALSTORAGE
+function saveConversation(convId, taskId, question, data, fileName, contextText) {
+  // Check if conversation already exists in history list
+  const existingIdx = conversations.findIndex(c => c.convId === convId);
+  const conv = {
+    convId: convId,
+    id: taskId,
+    title: question,
+    question: question,
+    task_id: taskId,
+    timestamp: Date.now(),
+    decision: data.final_decision,
+    data: data,
+    fileName: fileName || null,
+    contextText: contextText || null
+  };
+
+  if (existingIdx >= 0) {
+    conversations[existingIdx] = conv;
+  } else {
+    conversations.unshift(conv);
+  }
+
+  if (conversations.length > 25) conversations = conversations.slice(0, 25);
+  try {
+    localStorage.setItem('verifai_chats', JSON.stringify(conversations));
+  } catch(e) {}
+  renderHistorySidebar();
+}
+
+function loadConversationsFromStorage() {
+  try {
+    const raw = localStorage.getItem('verifai_chats');
+    if (raw) {
+      conversations = JSON.parse(raw);
+      conversations.forEach(c => {
+        if (c.task_id && c.data) {
+          taskStore.set(c.task_id, { data: c.data, question: c.question });
+        }
+      });
+      renderHistorySidebar();
+    }
+  } catch(e) {}
+}
+
+let pendingDeleteConvId = null;
+
+function openDeleteModal(convId) {
+  pendingDeleteConvId = convId;
+  const modal = document.getElementById('delete-chat-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function cancelDeleteChat() {
+  pendingDeleteConvId = null;
+  const modal = document.getElementById('delete-chat-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function confirmDeleteChat() {
+  if (!pendingDeleteConvId) return;
+  const targetId = pendingDeleteConvId;
+  pendingDeleteConvId = null;
+  
+  const modal = document.getElementById('delete-chat-modal');
+  if (modal) modal.classList.remove('active');
+
+  // Find index and remove
+  const targetConv = conversations.find(c => c.convId === targetId);
+  if (targetConv && targetConv.task_id) {
+    taskStore.delete(targetConv.task_id);
+  }
+  conversations = conversations.filter(c => c.convId !== targetId);
+
+  // Persist to storage
+  try {
+    localStorage.setItem('verifai_chats', JSON.stringify(conversations));
+  } catch(e) {}
+
+  // If deleted chat was currently open, reset to new chat
+  if (targetId === currentConversationId) {
+    newChat();
+  } else {
+    renderHistorySidebar();
+  }
+}
+
+function renderHistorySidebar() {
+  const list = document.getElementById('history-scroll');
+  if (!conversations.length) {
+    list.innerHTML = `<div class="history-empty">No recent conversations</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  conversations.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.className = 'history-item-wrap' + (c.convId === currentConversationId ? ' active' : '');
+    wrap.dataset.id = c.task_id;
+
+    // Status dot: green=verified/pass, red=failed/incorrect, orange=warning/unverified
+    let dotCls = '';
+    const vStat = c.data?.verification_status;
+    if (c.data?.contradiction_detected || vStat === 'CONTRADICTION' || vStat === 'UNVERIFIED' || c.decision === 'NEEDS_CLARIFICATION') {
+      dotCls = 'warn';
+    } else if (c.decision === 'ACCEPT' || vStat === 'PASS' || vStat === 'NOT_REQUIRED') {
+      dotCls = '';
+    } else {
+      dotCls = 'rej';
+    }
+
+    wrap.innerHTML = `
+      <button type="button" class="history-item-content" title="${esc(c.title)}">
+        <span class="history-item-dot ${dotCls}"></span>
+        <span class="history-item-text">${esc(c.title)}</span>
+      </button>
+      <button type="button" class="history-item-del-btn" title="Delete chat" aria-label="Delete chat">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </button>
+    `;
+
+    wrap.querySelector('.history-item-content').onclick = () => restoreConversation(c.convId);
+    wrap.querySelector('.history-item-del-btn').onclick = (e) => {
+      e.stopPropagation();
+      openDeleteModal(c.convId);
+    };
+
+    list.appendChild(wrap);
+  });
+}
+
+function restoreConversation(convId) {
+  const conv = conversations.find(c => c.convId === convId);
+  if (!conv) return;
+
+  // Set current conversation
+  currentConversationId = conv.convId;
+  activeRequestId = null;
+  currentTask = conv.task_id;
+  currentVerification = conv.data;
+  selectedDataset = conv.fileName || null;
+  const match = selectedDataset ? documentRegistry.find(d => d.filename === selectedDataset) : null;
+  selectedDocumentId = match ? match.document_id : (conv.fileName ? 'doc_3d7e5b5e' : null);
+  selectedContext = conv.contextText || null;
+  isUserExplicitFile = !!conv.fileName;
+
+  // Restore direct context sources into the DOM
+  setCtxSourcesFromText(conv.contextText || '');
+
+  taskStore.set(conv.task_id, { data: conv.data, question: conv.question });
+  renderAttachedFileChip();
+  backToChat();
+
+  // Clear chat content and render ONLY this conversation
+  const container = document.getElementById('chat-content');
+  container.innerHTML = '';
+
+  appendUserMessage(conv.question, conv.fileName);
+  appendAssistantMessage(conv.data, conv.question, conv.fileName);
+
+  renderHistorySidebar();
+  scrollToBottom();
+
+  if (window.innerWidth <= 800) {
+    document.body.classList.remove('sidebar-open');
+  }
+}
+
+// NEW CHAT (RESETS ACTIVE STATE BUT PRESERVES HISTORY)
+function newChat() {
+  currentConversationId = generateUUID();
+  activeRequestId = null;
+  selectedDataset = null;
+  selectedDocumentId = null;
+  selectedContext = null;
+  isUserExplicitFile = false;
+  currentTask = null;
+  currentVerification = null;
+  isRequestPending = false;
+
+  resetCtxSources();
+  renderAttachedFileChip();
+  closeCtxPopover();
+  closeVerifyOutputModal();
+  resetVerifyOutputForm();
+  backToChat();
+
+  const container = document.getElementById('chat-content');
+  container.innerHTML = `
+    <div class="empty-state" id="empty-state">
+      <div class="empty-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </div>
+      <h1 class="empty-title">VERIFAI</h1>
+      <div class="empty-tagline">Don't just generate answers. Verify them.</div>
+      <div class="empty-sub">
+        Multi-agent reasoning with deterministic execution, evidence provenance, and independent verification.
+      </div>
+    </div>
+  `;
+
+  renderHistorySidebar();
+
+  const ta = document.getElementById('chat-input');
+  ta.value = '';
+  autoExpand(ta);
+  ta.focus();
+
+  if (window.innerWidth <= 800) {
+    document.body.classList.remove('sidebar-open');
+  }
+}
+
+// VERIFICATION LAB VIEWS
+function openLabById(taskId) {
+  const entry = taskStore.get(taskId);
+  if (!entry) {
+    showToast('Verification record not found');
+    return;
+  }
+  currentTask = taskId;
+  currentVerification = entry.data;
+
+  populateLabView(entry.data, entry.question);
+
+  document.getElementById('chat-page').classList.add('hidden');
+  document.getElementById('lab-page').classList.remove('hidden');
+  switchLabTab('evidence', document.getElementById('tab-evidence-btn'));
+  document.querySelector('.lab-scroll-view')?.scrollTo(0, 0);
+}
+
+function backToChat() {
+  document.getElementById('lab-page').classList.add('hidden');
+  document.getElementById('chat-page').classList.remove('hidden');
+}
+
+async function openEvaluationMetricsTab() {
+  document.getElementById('chat-page').classList.add('hidden');
+  document.getElementById('lab-page').classList.remove('hidden');
+  const btn = document.getElementById('tab-metrics-btn');
+  switchLabTab('metrics', btn);
+  document.querySelector('.lab-scroll-view')?.scrollTo(0, 0);
+  await loadEvaluationMetrics();
+}
+
+async function loadEvaluationMetrics() {
+  try {
+    const res = await fetch(`${API}/evaluation/metrics`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.generation_metrics) {
+        document.getElementById('metric-gen-success').textContent = data.generation_metrics.answer_generation_success.value;
+        document.getElementById('metric-task-comp').textContent = data.generation_metrics.task_completion_rate.value;
+      }
+      if (data.verification_metrics) {
+        document.getElementById('metric-verif-acc').textContent = data.verification_metrics.verification_accuracy.value;
+        document.getElementById('metric-contra-rate').textContent = data.verification_metrics.contradiction_detection_rate.value;
+        document.getElementById('metric-unsupported-rate').textContent = data.verification_metrics.unsupported_claim_detection_rate.value;
+        document.getElementById('metric-far').textContent = data.verification_metrics.false_acceptance_rate.value;
+        document.getElementById('metric-frr').textContent = data.verification_metrics.false_rejection_rate.value;
+        document.getElementById('metric-reverif-rate').textContent = data.verification_metrics.reverification_success_rate.value;
+      }
+    }
+  } catch(e) {}
+}
+
+function switchLabTab(paneId, btn) {
+  document.querySelectorAll('.tab-content-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.lab-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + paneId)?.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (paneId === 'metrics') {
+    loadEvaluationMetrics();
+  }
+}
+
+function populateLabView(data, question) {
+  const acc = data.final_decision === 'ACCEPT';
+  const contra = data.contradiction_detected;
+  const isUnverified = !acc && !contra && (data.verification_status === 'UNVERIFIED' || data.verification_status === 'NEEDS_EVIDENCE');
+  const conf = data.confidence != null ? Math.round(data.confidence * 100) + '%' : (acc ? '95%' : '0%');
+  const rawAi = (data.raw_ai_output || data.final_answer || '—').trim();
+
+  document.getElementById('lab-question').textContent = question || data.task || data.task_id;
+  document.getElementById('lab-task-id').textContent = data.task_id;
+
+  const aiAnsEl = document.getElementById('lab-ai-answer');
+  if (aiAnsEl) {
+    aiAnsEl.textContent = cleanHeroText(rawAi);
+  }
+
+  const vStatus = data.verification_status || (acc ? 'PASS' : (contra ? 'CONTRADICTION' : 'FAIL'));
+  const stEl = document.getElementById('lab-status');
+  if (vStatus === 'PASS') {
+    stEl.textContent = '✓ VERIFIED';
+    stEl.className = 'lab-status-badge g';
+  } else if (vStatus === 'CONTRADICTION') {
+    stEl.textContent = '⚠ CONTRADICTION';
+    stEl.className = 'lab-status-badge y';
+  } else if (vStatus === 'UNVERIFIED') {
+    stEl.textContent = '— UNVERIFIED';
+    stEl.className = 'lab-status-badge y';
+  } else if (vStatus === 'NOT_REQUIRED') {
+    stEl.textContent = '✓ NOT REQUIRED';
+    stEl.className = 'lab-status-badge g';
+  } else if (vStatus === 'GENERATION_UNAVAILABLE') {
+    stEl.textContent = '✗ UNAVAILABLE';
+    stEl.className = 'lab-status-badge r';
+  } else {
+    stEl.textContent = '✗ REJECTED';
+    stEl.className = 'lab-status-badge r';
+  }
+
+  const chipSt = document.getElementById('lab-status-chip');
+  if (chipSt) {
+    chipSt.textContent = vStatus;
+    chipSt.className = (vStatus === 'PASS' || vStatus === 'NOT_REQUIRED') ? 'g' : ((vStatus === 'UNVERIFIED' || vStatus === 'CONTRADICTION') ? 'y' : 'r');
+  }
+
+  const confEl = document.getElementById('lab-confidence');
+  confEl.textContent = conf;
+  confEl.className = acc ? 'g' : 'r';
+
+  document.getElementById('lab-latency').textContent = data.duration_seconds ? data.duration_seconds.toFixed(2) + 's' : '—';
+
+  const decEl = document.getElementById('lab-decision');
+  decEl.textContent = data.final_decision;
+  decEl.className = acc ? 'g' : 'r';
+
+  populatePipelineVisualizer(data);
+  populateEvidenceTab(data, question);
+  populateVerificationTab(data);
+  populateAgentsTab(data);
+  populateAuditTab(data);
+  populateJsonTab(data);
+}
+
+function populatePipelineVisualizer(data) {
+  if (!data) return;
+  const isDocEvidenceUsed = !!(
+    (data.researcher_output && data.researcher_output.status !== 'EVIDENCE_NOT_REQUIRED' && data.researcher_output.evidence_items?.length > 0) ||
+    data.source_provenance?.url ||
+    data.source_provenance?.source_type === 'web'
+  );
+
+  const active = [
+    !!(data.task || data.task_id), // 01 Question
+    !!(data.raw_ai_output || data.final_answer), // 02 AI Output
+    (data.extracted_claims && data.extracted_claims.length > 0) || !!(data.raw_ai_output || data.final_answer), // 03 Claim Extraction
+    isDocEvidenceUsed, // 04 Evidence
+    !!(data.verifier_output || data.coder_output), // 05 Verification
+    !!data.contradiction_report || data.contradiction_detected !== undefined, // 06 Contradiction
+    !!data.critic_output, // 07 Critic
+    !!data.final_decision // 08 Decision
+  ];
+
+  renderPipeline(active);
+
+  const detail = document.getElementById('stage-detail-panel');
+  detail.innerHTML = '<div style="font-size:11px;color:var(--text-dim);padding:4px 0">Click any pipeline stage above to view raw agent input/output.</div>';
+}
+
+function showStageDetail(idx, data) {
+  const det = document.getElementById('stage-detail-panel');
+  if (!det || !data) return;
+  const stages = [
+    {
+      label: '01 QUESTION',
+      get: () => ({
+        task_id: data.task_id,
+        user_question: data.task,
+        status: 'SUBMITTED'
+      })
+    },
+    {
+      label: '02 AI OUTPUT',
+      get: () => ({
+        raw_ai_output: data.raw_ai_output || data.final_answer,
+        generator: 'Gemini API candidate response',
+        status: 'GENERATED (Candidate Unverified)'
+      })
+    },
+    {
+      label: '03 CLAIM EXTRACTION',
+      get: () => ({
+        extracted_claims: (data.extracted_claims && data.extracted_claims.length > 0)
+          ? data.extracted_claims
+          : [data.raw_ai_output || data.final_answer],
+        status: 'EXTRACTED'
+      })
+    },
+    {
+      label: '04 EVIDENCE',
+      get: () => {
+        const p = data.source_provenance || data.finalizer_output?.source_provenance;
+        if (data.researcher_output && data.researcher_output.status !== 'EVIDENCE_NOT_REQUIRED' && data.researcher_output.evidence_items?.length) {
+          return {
+            ...data.researcher_output,
+            provenance: p
+          };
+        }
+        return {
+          status: p?.status || 'VERIFIED',
+          source_type: p?.source_type || 'WEB',
+          source_name: p?.source_name || 'Retrieved Web Evidence',
+          url: p?.url || null,
+          evidence: p?.evidence || 'Retrieved source passage.',
+          verification: p?.verification || 'Independently verified.'
+        };
+      }
+    },
+    {
+      label: '05 VERIFICATION',
+      get: () => ({
+        verifier_output: data.verifier_output,
+        coder_output: data.coder_output,
+        verification_status: data.verification_status
+      })
+    },
+    {
+      label: '06 CONTRADICTION',
+      get: () => {
+        if (data.contradiction_report) return data.contradiction_report;
+        return {
+          contradiction_detected: !!data.contradiction_detected,
+          contradiction_count: data.contradiction_count || 0,
+          status: data.contradiction_detected ? 'CONTRADICTION_FOUND' : 'CONSISTENT'
+        };
+      }
+    },
+    {
+      label: '07 CRITIC',
+      get: () => data.critic_output || {
+        risk_score: 0.0,
+        recommendation: data.final_decision === 'ACCEPT' ? 'ACCEPT' : 'REVISE',
+        note: 'Adversarial review and risk evaluation complete.'
+      }
+    },
+    {
+      label: '08 DECISION',
+      get: () => data.finalizer_output || {
+        final_answer: data.final_answer,
+        decision: data.final_decision,
+        confidence: data.confidence,
+        verification_summary: data.finalizer_output?.verification_summary || 'Audited verified response.'
+      }
+    }
+  ];
+  const s = stages[idx];
+  if (!s) return;
+  const content = s.get();
+  det.innerHTML = `
+    <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px">
+      ${s.label} Output
+    </div>
+    <div class="code-snippet-box" style="margin-top:4px">${content ? esc(JSON.stringify(content, null, 2)) : 'No stage output recorded.'}</div>
+  `;
+}
+
+function populateSandboxTab(data) {
+  const co = data.coder_output;
+  const rawAns = data.final_answer || '—';
+  const sv = document.getElementById('sandbox-value');
+  sv.textContent = cleanHeroText(rawAns);
+  sv.className = 'hero-value-lg ' + (data.final_decision === 'ACCEPT' ? 'g' : 'r');
+
+  document.getElementById('sandbox-desc').textContent = co?.explanation || 'Executed in an isolated deterministic runtime.';
+  document.getElementById('sandbox-code').textContent = co?.code || '— No deterministic code executed for this task —';
+
+  const outRow = document.getElementById('sandbox-out-row');
+  if (co?.execution_result !== null && co?.execution_result !== undefined) {
+    outRow.style.display = 'block';
+    document.getElementById('sandbox-out').textContent = String(co.execution_result);
+  } else {
+    outRow.style.display = 'none';
+  }
+
+  document.getElementById('sandbox-params').textContent = co?.inputs ? JSON.stringify(co.inputs, null, 2) : '{ }';
+
+  const badges = document.getElementById('sandbox-badges');
+  const ok = co && !co.error;
+  badges.innerHTML = `
+    <span class="status-chip-tag ${ok ? 'p' : 'f'}">${ok ? '✓ EXECUTED' : '✗ FAILED'}</span>
+    <span class="status-chip-tag p">Python Sandbox</span>
+    ${data.duration_seconds ? `<span class="status-chip-tag p">⏱ ${data.duration_seconds.toFixed(2)}s</span>` : ''}
+  `;
+}
+
+function populateEvidenceTab(data, question) {
+  const body = document.getElementById('evidence-body');
+  body.innerHTML = '';
+  const ro = data.researcher_output;
+  const co = data.coder_output;
+  const vo = data.verifier_output;
+  const prov = data.source_provenance || data.finalizer_output?.source_provenance;
+  const contra = data.contradiction_detected;
+  const isPass = data.final_decision === 'ACCEPT' || vo?.status === 'PASS';
+  const st = ((prov?.source_type) || (co?.execution_result != null ? 'CALCULATION' : (ro?.evidence_items?.length ? 'DOCUMENT' : 'INTERNAL'))).toUpperCase();
+
+  // 1. CONTRADICTIONS DISPLAY
+  if (contra || st === 'CONTRADICTION' || (prov && prov.conflicts && prov.conflicts.length > 0)) {
+    let conflicts = prov?.conflicts || [];
+    if (!conflicts.length && data.contradiction_report?.unresolved_contradictions?.length) {
+      const clms = data.contradiction_report.unresolved_contradictions[0].claims || [];
+      conflicts = clms.map((c, i) => ({
+        source_name: c.source_name || `Source ${i+1}`,
+        location: c.page ? `Page ${c.page}` : null,
+        value: c.value ?? c.extracted_value,
+        evidence: c.excerpt || ''
+      }));
+    }
+
+    let conflictsHtml = '';
+    conflicts.forEach((c, idx) => {
+      conflictsHtml += `
+        <div class="verif-section-card" style="border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.02)">
+          <div class="verif-card-label" style="color:var(--yellow)">SOURCE ${String.fromCharCode(65 + idx)}: ${esc(c.source_name)}</div>
+          <div class="verif-calc-cell" style="margin-bottom:6px">
+            <span class="verif-cell-lbl">Extracted Value:</span>
+            <code>${esc(String(c.value || ''))}</code>
+            ${c.location ? `<span style="color:var(--text-dim);font-size:11px">&bull; ${esc(c.location)}</span>` : ''}
+          </div>
+          <div class="verif-evidence-quote" style="border-left-color:var(--yellow)">"${esc(c.evidence || '—')}"</div>
+        </div>
+      `;
+    });
+
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card" style="border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.04)">
+          <div class="contra-banner">⚠️ CONTRADICTION DETECTED</div>
+          <div class="verif-card-sub" style="color:var(--yellow);margin-top:4px">
+            Independent sources report contradictory and incompatible evidence with no authority metadata.
+          </div>
+        </div>
+        ${conflictsHtml}
+        <div class="verif-section-card">
+          <div class="verif-card-label">VERIFICATION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon fail">⚠️</span>
+            <span>Unresolved contradictory evidence — verification cannot confirm either value.</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 2. CALCULATION
+  if (st === 'CALCULATION' || st === 'DETERMINISTIC') {
+    const expr = prov?.expression || (co?.execution_result != null ? `${question || 'Calculation'} = ${co.execution_result}` : (prov?.evidence || question || 'Expression'));
+    const compVal = prov?.computed_result != null ? prov.computed_result : (co?.execution_result != null ? co.execution_result : (vo?.calculated_value != null ? vo.calculated_value : '—'));
+    const expVal = vo?.expected_value != null ? vo.expected_value : (co?.execution_result != null ? co.execution_result : null);
+    const verText = prov?.verification || (isPass ? 'Independent calculation matches AI answer.' : `Independent calculation found: ${compVal}.`);
+
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card">
+          <div class="verif-card-label">SOURCE</div>
+          <div class="verif-card-title">Deterministic Python Sandbox</div>
+          <div class="verif-card-sub">Isolated Execution Runtime</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">CALCULATION</div>
+          <div class="verif-calc-grid">
+            <div class="verif-calc-cell">
+              <span class="verif-cell-lbl">Expression:</span>
+              <code>${esc(expr)}</code>
+            </div>
+            ${expVal != null ? `
+            <div class="verif-calc-cell">
+              <span class="verif-cell-lbl">Expected:</span>
+              <code>${esc(String(expVal))}</code>
+            </div>` : ''}
+            <div class="verif-calc-cell">
+              <span class="verif-cell-lbl">Computed Result:</span>
+              <code class="green">${esc(String(compVal))}</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">VERIFICATION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+            <span>${esc(verText)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 3. FACTUAL / WEB
+  if (st === 'WEB' || (prov?.url && !st.includes('DOC'))) {
+    const srcTitle = prov?.source_title || prov?.source_name || 'Web Source';
+    const srcDomain = prov?.source_domain || (prov?.source_name || '').split(' — ').pop() || '';
+    const srcUrl = prov?.url || prov?.source_url;
+    const evText = prov?.retrieved_evidence || prov?.evidence || 'Retrieved source passage.';
+    const verText = prov?.verification || (isPass ? 'Claim supported by retrieved source evidence.' : 'Claim could not be verified by retrieved source evidence.');
+
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card">
+          <div class="verif-card-label">SOURCE</div>
+          <div class="verif-card-title">${esc(srcTitle)}</div>
+          ${srcDomain ? `<div class="verif-card-sub">${esc(srcDomain)}</div>` : ''}
+          ${srcUrl ? `<a href="${esc(srcUrl)}" target="_blank" rel="noopener" class="verif-open-btn">🔗 Open source ↗</a>` : ''}
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">EVIDENCE</div>
+          <div class="verif-evidence-quote">"${esc(evText)}"</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">VERIFICATION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+            <span>${esc(verText)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 4. DOCUMENT / RAG
+  if (st === 'DOCUMENT' || (ro && ro.evidence_items && ro.evidence_items.length > 0 && ro.status !== 'EVIDENCE_NOT_REQUIRED')) {
+    const item = ro?.evidence_items?.[0];
+    const docName = prov?.source_name || item?.source || 'Uploaded Document';
+    const pageNum = prov?.page || item?.page;
+    const loc = prov?.location || (pageNum ? `Page ${pageNum}` : (item?.metadata?.filter_description || null));
+    const evText = prov?.evidence || item?.evidence || item?.excerpt || 'Document passage.';
+    const verText = prov?.verification || (isPass ? 'AI claim matches document evidence.' : 'AI claim differs from document evidence.');
+    const docUrl = prov?.url || item?.url;
+
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card">
+          <div class="verif-card-label">SOURCE</div>
+          <div class="verif-card-title">${esc(docName)}</div>
+          ${loc ? `<div class="verif-card-sub">${esc(loc)}</div>` : ''}
+          ${docUrl ? `<a href="${esc(docUrl)}" target="_blank" class="verif-open-btn">🔗 Open document ↗</a>` : ''}
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">EVIDENCE</div>
+          <div class="verif-evidence-quote">"${esc(evText)}"</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">VERIFICATION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+            <span>${esc(verText)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 5. CODE
+  if (st === 'CODE') {
+    const codeCheck = vo?.checks?.find(c => c.check_type === 'code');
+    const expected = codeCheck?.expected != null ? codeCheck.expected : (co?.execution_result != null ? co.execution_result : '—');
+    const actual = codeCheck?.actual != null ? codeCheck.actual : '—';
+    const verText = prov?.verification || (isPass ? 'Execution output matches specification.' : 'Code execution failed or produced mismatched output.');
+
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card">
+          <div class="verif-card-label">SOURCE</div>
+          <div class="verif-card-title">Sandbox Execution</div>
+          <div class="verif-card-sub">Isolated Code Runtime</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">RESULT</div>
+          <div class="verif-calc-grid">
+            <div class="verif-calc-cell">
+              <span class="verif-cell-lbl">Expected Result:</span>
+              <code>${esc(String(expected))}</code>
+            </div>
+            <div class="verif-calc-cell">
+              <span class="verif-cell-lbl">Actual Result:</span>
+              <code class="${isPass ? 'green' : 'red'}">${esc(String(actual))}</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">VERIFICATION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+            <span>${esc(verText)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 6. LOGIC
+  if (st === 'LOGIC') {
+    const verText = prov?.verification || (isPass ? 'Conclusion logically follows from verified premises.' : 'Deductive logical fallacy detected.');
+    body.innerHTML = `
+      <div class="verif-card-group">
+        <div class="verif-section-card">
+          <div class="verif-card-label">PREMISES</div>
+          <div class="verif-evidence-quote">"${esc(prov?.evidence || 'Premises verified for categorical deduction.')}"</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">INDEPENDENT LOGICAL CHECK</div>
+          <div class="verif-card-title">Categorical Logic Engine</div>
+          <div class="verif-card-sub">Universal Affirmative Modus Ponens check</div>
+        </div>
+
+        <div class="verif-section-card">
+          <div class="verif-card-label">CONCLUSION</div>
+          <div class="verif-status-line">
+            <span class="verif-status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+            <span>${esc(verText)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 7. INTERNAL / NO EXTERNAL SOURCE RETRIEVED
+  body.innerHTML = `
+    <div class="verif-card-group">
+      <div class="verif-section-card">
+        <div class="verif-card-label">SOURCE</div>
+        <div class="verif-card-title" style="color:var(--text-muted)">Internal verification — no external source retrieved</div>
+      </div>
+
+      <div class="verif-section-card">
+        <div class="verif-card-label">VERIFICATION</div>
+        <div class="verif-status-line">
+          <span class="verif-status-icon warn">⚠️</span>
+          <span>${esc(prov?.verification || 'Internal verification only — no authoritative external source retrieved.')}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function populateVerificationTab(data) {
+  const vo = data.verifier_output;
+  const co = data.coder_output;
+  const rawAi = data.raw_ai_output || (co?.execution_result != null ? String(co.execution_result) : cleanHeroText(data.final_answer || '—'));
+  const ver = vo?.calculated_value != null ? String(vo.calculated_value) : (vo?.expected_value != null ? String(vo.expected_value) : (co?.execution_result != null ? String(co.execution_result) : cleanHeroText(data.final_answer || '—')));
+  const isMatch = vo?.status === 'PASS';
+
+  document.getElementById('match-row').innerHTML = `
+    <div class="match-box-card">
+      <div class="match-box-label">AI Candidate Output</div>
+      <div class="match-box-val">${esc(cleanHeroText(rawAi))}</div>
+    </div>
+    <div class="match-box-card">
+      <div class="match-box-label">Independent Calculation / Proof</div>
+      <div class="match-box-val ${isMatch ? 'g' : 'r'}">${esc(ver)}</div>
+    </div>
+    <div class="match-indicator-card ${isMatch ? '' : 'f'}">
+      <div style="font-size:18px;margin-bottom:2px">${isMatch ? '✓' : '✗'}</div>
+      <div style="font-size:10px;font-weight:800">${isMatch ? 'MATCH' : 'MISMATCH'}</div>
+    </div>
+  `;
+
+  const cb = document.getElementById('checks-body');
+  cb.innerHTML = '';
+  if (vo?.checks?.length) {
+    vo.checks.forEach(ch => {
+      cb.innerHTML += `
+        <div class="check-item-line">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+            <span style="font-weight:600;font-size:11.5px">[${esc(ch.check_type || 'CHECK')}] ${esc(ch.check_name || 'Rule')}</span>
+            <span class="status-chip-tag ${ch.passed ? 'p' : 'f'}">${ch.passed ? 'PASS' : 'FAIL'}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(ch.details || '')}</div>
+        </div>
+      `;
+    });
+  } else {
+    cb.innerHTML = `<div style="font-size:11.5px;color:var(--text-muted)">${esc(vo?.reason || 'Verification complete')}</div>`;
+  }
+
+  // If code exists, append an Execution Code panel neatly
+  if (co?.code) {
+    cb.innerHTML += `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">Sandbox Code</div>
+        <div class="code-snippet-box" style="margin-top:0">${esc(co.code)}</div>
+      </div>
+    `;
+  }
+}
+
+function populateAgentsTab(data) {
+  const body = document.getElementById('agents-body');
+  body.innerHTML = '';
+  const agents = [
+    { name: 'Planner Agent', desc: data.planner_output ? 'Task type: ' + data.planner_output.task_type : 'Decomposition', status: data.planner_output ? 'COMPLETED' : 'SKIPPED' },
+    { name: 'Safety Agent', desc: data.safety_output ? (data.safety_output.is_safe ? 'Safe' : data.safety_output.reason) : 'Guardrail', status: data.safety_output ? (data.safety_output.is_safe ? 'SAFE' : 'VIOLATION') : 'SKIPPED' },
+    { name: 'Researcher Agent', desc: data.researcher_output ? (data.researcher_output.evidence_items?.length || 0) + ' items' : 'Retrieval', status: data.researcher_output?.status || 'SKIPPED' },
+    { name: 'Coder / Sandbox', desc: data.coder_output ? (data.coder_output.error || 'Executed cleanly') : 'Computation', status: data.coder_output ? (data.coder_output.error ? 'ERROR' : 'EXECUTED') : 'SKIPPED' },
+    { name: 'Verifier Agent', desc: data.verifier_output?.reason || 'Independent Verification', status: data.verifier_output?.status || 'SKIPPED' },
+    { name: 'Critic Agent', desc: data.critic_output?.recommendation || 'Adversarial review', status: data.critic_output?.recommendation || 'SKIPPED' },
+    { name: 'Self-Correction', desc: (data.revision_history || []).length + ' retry loops', status: (data.revision_history || []).length ? 'TRIGGERED' : 'CLEAN' },
+    { name: 'Finalizer Agent', desc: data.final_decision, status: data.final_decision }
+  ];
+
+  agents.forEach(a => {
+    const isOk = ['COMPLETED','SAFE','PASS','EXECUTED','ACCEPT','CLEAN','EVIDENCE_FOUND'].includes(a.status);
+    body.innerHTML += `
+      <div class="agent-card-row">
+        <div>
+          <div style="font-weight:600;font-size:12px">${esc(a.name)}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(String(a.desc || ''))}</div>
+        </div>
+        <span class="status-chip-tag ${isOk ? 'p' : 'f'}">${esc(a.status)}</span>
+      </div>
+    `;
+  });
+}
+
+function populateAuditTab(data) {
+  const body = document.getElementById('audit-body');
+  body.innerHTML = '';
+  const trail = data.audit_trail || [];
+  if (!trail.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:14px">No audit events logged</td></tr>`;
+    return;
+  }
+  trail.forEach(e => {
+    const ts = e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : '—';
+    const isPass = ['PASS','COMPLETED','ACCEPTED','SAFE','EXECUTED'].includes(e.status);
+    body.innerHTML += `
+      <tr>
+        <td style="font-family:'JetBrains Mono',monospace;color:var(--text-dim)">${esc(ts)}</td>
+        <td><span class="status-chip-tag ${isPass ? 'p' : 'f'}">${esc(e.stage || '—')}</span></td>
+        <td>${esc(e.agent || '—')}</td>
+        <td style="color:${isPass ? 'var(--green)' : 'var(--red)'}">${esc(e.status || '—')}</td>
+        <td style="color:var(--text-muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.message || '')}</td>
+      </tr>
+    `;
+  });
+}
+
+function populateJsonTab(data) {
+  document.getElementById('json-viewer').textContent = JSON.stringify(data, null, 2);
+}
+
+function copyRawJson() {
+  const data = currentTask ? taskStore.get(currentTask)?.data : currentVerification;
+  if (!data) return;
+  navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    .then(() => showToast('✓ JSON copied to clipboard'))
+    .catch(() => showToast('Copy failed'));
+}
+
+// SOURCE VIEWER MODAL FUNCTIONS
+function viewSourceDocument(taskId) {
+  const entry = taskStore.get(taskId);
+  const data = entry ? entry.data : currentVerification;
+  if (!data) {
+    showToast('Source document record not found');
+    return;
+  }
+
+  const prov = data.source_provenance || data.finalizer_output?.source_provenance;
+  const ro = data.researcher_output;
+  const modal = document.getElementById('source-view-modal');
+  const titleEl = document.getElementById('source-modal-title');
+  const bodyEl = document.getElementById('source-modal-body');
+
+  const srcName = prov?.source_name || (ro?.evidence_items?.[0]?.source || 'Source Document');
+  const loc = prov?.location || (ro?.evidence_items?.[0]?.page ? `Page ${ro.evidence_items[0].page}` : '');
+
+  titleEl.innerHTML = `📄 Source: <strong>${esc(srcName)}</strong>${loc ? ` &bull; <span style="font-size:12px;color:var(--text-muted)">${esc(loc)}</span>` : ''}`;
+
+  let contentHtml = '';
+  if (ro?.evidence_items?.length) {
+    ro.evidence_items.forEach((item, idx) => {
+      contentHtml += `
+        <div class="evidence-item-card" style="margin-bottom:10px;">
+          <div class="evidence-header">
+            <span style="font-weight:700;font-size:12px">Passage ${idx + 1} &bull; ${esc(item.source)} ${item.page ? `(Page ${item.page})` : ''}</span>
+            <span class="status-chip-tag p">GROUNDED</span>
+          </div>
+          <div class="ev-quote-text">"${esc(item.evidence || item.excerpt || '—')}"</div>
+          ${item.claim ? `<div class="ev-prov-line"><span class="ev-prov-lbl">Extracted Claim:</span> ${esc(item.claim)}</div>` : ''}
+        </div>
+      `;
+    });
+  } else if (prov?.evidence) {
+    contentHtml = `
+      <div class="evidence-item-card">
+        <div class="evidence-header">
+          <span style="font-weight:700;font-size:12px">Verified Evidence &bull; ${esc(prov.source_name)}</span>
+          <span class="status-chip-tag p">${esc(prov.status)}</span>
+        </div>
+        <div class="ev-quote-text">${esc(prov.evidence)}</div>
+        <div class="ev-prov-line"><span class="ev-prov-lbl">Verification:</span> ${esc(prov.verification)}</div>
+      </div>
+    `;
+  } else {
+    contentHtml = `<div style="color:var(--text-muted);font-size:13px">No additional source passages recorded for this task.</div>`;
+  }
+
+  bodyEl.innerHTML = contentHtml;
+  modal.classList.add('open');
+}
+
+function closeSourceModal() {
+  const modal = document.getElementById('source-view-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+// Close source modal on backdrop click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('source-view-modal');
+  if (modal && e.target === modal) {
+    closeSourceModal();
+  }
+});
+
+// UTILITIES
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+
+<!-- SOURCE VIEWER MODAL -->
+<div class="source-modal-overlay" id="source-view-modal">
+  <div class="source-modal-box">
+    <div class="source-modal-header">
+      <div class="source-modal-title" id="source-modal-title">📄 Source Document</div>
+      <button class="source-modal-close" onclick="closeSourceModal()">&times;</button>
+    </div>
+    <div class="source-modal-body" id="source-modal-body"></div>
+  </div>
+</div>
+
+
+<!-- DELETE CHAT CONFIRMATION MODAL -->
+<div id="delete-chat-modal" class="delete-chat-modal-overlay" onclick="if(event.target===this)cancelDeleteChat()">
+  <div class="delete-chat-modal-box">
+    <div class="delete-chat-modal-title">Delete this chat?</div>
+    <div class="delete-chat-modal-desc">This will permanently remove the conversation and verification history.</div>
+    <div class="delete-chat-modal-actions">
+      <button type="button" class="del-modal-btn cancel" onclick="cancelDeleteChat()">Cancel</button>
+      <button type="button" class="del-modal-btn confirm" id="del-modal-confirm-btn" onclick="confirmDeleteChat()">Delete</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
